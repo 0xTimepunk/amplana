@@ -6,10 +6,10 @@ This file provides guidance to Claude Code when working with this repository.
 
 **Archon** is a general-purpose spec-driven development plugin repository for Claude Code and ChatGPT Codex. It provides:
 
-1. **`/dev:spec`** — AI interview + parallel research agents to create feature specifications
+1. **`/dev:brief`** — turns requirements the user has already decided into an agent-ready spec: focused questions, parallel research agents, build plan (`/dev:spec` stays as a deprecated alias for one release)
 2. **`/dev:work`** — Adaptive agent teams that execute specs (team size scales with complexity)
 3. **`dev:specifier`** — Auto-triggered Claude skill for spec creation
-4. **`archon:spec` / `archon:work`** — Codex-native skills for the same planning and execution workflows
+4. **`archon:brief` / `archon:work`** — Codex-native skills for the same planning and execution workflows (`archon:spec` is a deprecated alias)
 
 This is a **plugin repository**, not application code. It defines commands, skills, and workflows that Claude Code and ChatGPT Codex use to help engineers plan and build features.
 
@@ -22,9 +22,10 @@ archon/
 ├── .claude-plugin/marketplace.json  # Claude Code marketplace (name: archon) listing plugins/dev
 ├── plugins/dev/                     # Claude Code plugin
 │   ├── .claude-plugin/
-│   │   └── plugin.json              # Plugin metadata (name: dev, v1.1.0)
+│   │   └── plugin.json              # Plugin metadata (name: dev, v1.2.0)
 │   ├── commands/                    # User-invocable slash commands
-│   │   ├── spec.md                  # /dev:spec command
+│   │   ├── brief.md                 # /dev:brief command
+│   │   ├── spec.md                  # /dev:spec, deprecated alias of /dev:brief
 │   │   └── work.md                  # /dev:work command
 │   └── skills/                      # Auto-triggered skills
 │       └── specifier/
@@ -34,8 +35,10 @@ archon/
 │   │   └── plugin.json              # Codex plugin manifest
 │   ├── .mcp.json                    # Optional MCP server config
 │   └── skills/
+│       ├── brief/
+│       │   └── SKILL.md             # Codex brief workflow (archon:brief)
 │       ├── spec/
-│       │   └── SKILL.md             # Codex spec workflow
+│       │   └── SKILL.md             # archon:spec, deprecated alias
 │       └── work/
 │           └── SKILL.md             # Codex adaptive work workflow
 ├── .agents/plugins/marketplace.json # Repo-local Codex marketplace entry
@@ -61,7 +64,7 @@ Plan (80%) → Work (20%) → Assess → Compound
 ```
 
 ### 1. Plan (80% of effort)
-- Use `/dev:spec {feature-name}` command
+- Use `/dev:brief {feature-name} "{decided requirements}"` command
 - Complete AI interview with AskUserQuestion
 - Get stakeholder approval before implementation
 
@@ -145,4 +148,4 @@ claude plugin validate plugins/dev  # plugin manifest, commands, skills
 claude --plugin-dir plugins/dev     # one-off session with the working copy
 ```
 
-Then run `/dev:spec` and `/dev:work` on a tiny project (for example a single-file HTML game), with and without compound-engineering installed, and headless with `claude -p` to exercise the brief-only path.
+Then run `/dev:brief` and `/dev:work` on a tiny project (for example a single-file HTML game), with and without compound-engineering installed, and headless with `claude -p` to exercise the no-interview path.

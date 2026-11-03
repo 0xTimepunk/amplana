@@ -5,7 +5,7 @@ description: This skill should be used when creating feature specifications. Aut
 
 # Dev Specifier
 
-Routes spec requests to the `/dev:spec` workflow, so there is one spec process and one template.
+Routes spec requests to the `/dev:brief` workflow, so there is one spec process and one template.
 
 ## When This Skill Activates
 
@@ -23,16 +23,16 @@ This skill auto-triggers when the user:
 ## What To Do
 
 1. Derive a short kebab-case feature name from the request (for example "plan the payment integration" -> `payment-integration`).
-2. Collect any requirements the user already gave in the request into a one-paragraph brief.
-3. Run the spec command with both:
+2. Collect the requirements the user has already decided, from the request, into one paragraph. If they have not decided what to build yet, say that `/dev:brief` plans decided requirements and help them write those down first.
+3. Run the brief command with both:
 
    ```
-   Skill(skill="dev:spec", args="{feature-name} \"{brief}\"")
+   Skill(skill="dev:brief", args="{feature-name} \"{requirements}\"")
    ```
 
    Pass `--linear LINEAR-XXX` or `--figma <url>` through if the user mentioned them.
 
-4. Follow `/dev:spec` from there. It writes everything under `specs/{feature-name}/` at the repository root, leaves the spec as Draft for a human to approve, and points to `/dev:work` for execution.
+4. Follow `/dev:brief` from there. It writes everything under `specs/{feature-name}/` at the repository root, leaves the spec as Draft for a human to approve, and points to `/dev:work` for execution.
 
 ## Example Triggers
 
