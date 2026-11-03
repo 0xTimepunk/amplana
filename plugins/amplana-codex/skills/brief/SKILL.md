@@ -1,11 +1,11 @@
 ---
-name: archon:brief
-description: Turn requirements the user has already decided into an agent-ready spec in Codex, using focused questions, targeted research, and spec validation. Use when the user wants to brief or spec a feature before implementation.
+name: amplana:brief
+description: Turn requirements the user has already decided into an agent-ready spec in Codex, using focused questions, targeted research, and spec validation. Use when the user wants to brief or spec a feature before implementation, including when they ask for Amplana or Archon (its former name).
 ---
 
-# Archon Brief
+# Amplana Brief
 
-Brief the builders on what the user has already decided. Take their requirements, pressure-test them with focused questions, research the codebase, and write an agent-ready technical spec and build plan. This is the Codex-native equivalent of the Claude `/dev:brief` command (formerly `archon:spec`).
+Brief the builders on what the user has already decided. Take their requirements, pressure-test them with focused questions, research the codebase, and write an agent-ready technical spec and build plan. This is the Codex-native equivalent of the Claude `/dev:brief` command (formerly `amplana:spec`).
 
 Do not decide what to build: where the requirements leave a product decision open, ask or record it as an open question.
 

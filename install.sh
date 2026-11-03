@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
 
-# Installs the Archon Claude Code plugin from this clone, using Claude Code's
+# Installs the Amplana Claude Code plugin from this clone, using Claude Code's
 # own plugin system. Does not touch your shell rc files.
 #
-#   ./install.sh                              install Archon only
+#   ./install.sh                              install Amplana only
 #   ./install.sh --with-compound-engineering  also install the recommended
 #                                             compound-engineering plugin
 
@@ -26,7 +26,7 @@ done
 
 echo ""
 echo "=================================="
-echo "  Archon Plugin Installer"
+echo "  Amplana Plugin Installer"
 echo "=================================="
 echo ""
 
@@ -50,19 +50,26 @@ for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile"; do
     fi
 done
 
-# Step 3: Register this clone as a marketplace and install the plugin
-echo "Adding the Archon marketplace from $SCRIPT_DIR ..."
+# Step 3: Replace an install from before the rename to Amplana (dev@archon)
+if claude plugin uninstall dev@archon > /dev/null 2>&1; then
+    claude plugin marketplace remove archon > /dev/null 2>&1 || true
+    echo "Removed the old dev@archon install (Archon is now Amplana)."
+    echo ""
+fi
+
+# Step 4: Register this clone as a marketplace and install the plugin
+echo "Adding the Amplana marketplace from $SCRIPT_DIR ..."
 claude plugin marketplace add "$SCRIPT_DIR"
 echo ""
-echo "Installing dev@archon ..."
-claude plugin install dev@archon
-echo -e "${GREEN}Archon installed.${NC}"
+echo "Installing dev@amplana ..."
+claude plugin install dev@amplana
+echo -e "${GREEN}Amplana installed.${NC}"
 
-# Step 4: compound-engineering (recommended, optional)
+# Step 5: compound-engineering (recommended, optional)
 if [ -z "$WITH_CE" ] && [ -t 0 ]; then
     echo ""
-    echo "Archon works best with the compound-engineering plugin (research and review agents)."
-    echo "Without it, Archon uses general-purpose agents for the same roles."
+    echo "Amplana works best with the compound-engineering plugin (research and review agents)."
+    echo "Without it, Amplana uses general-purpose agents for the same roles."
     read -r -p "Install compound-engineering now? [y/N] " reply
     case "$reply" in [yY]*) WITH_CE="yes" ;; esac
 fi
@@ -72,7 +79,7 @@ if [ -n "$WITH_CE" ]; then
     claude plugin install compound-engineering --marketplace EveryInc/compound-engineering-plugin
 fi
 
-# Step 5: Summary
+# Step 6: Summary
 echo ""
 echo "=================================="
 echo "  Installation Complete!"

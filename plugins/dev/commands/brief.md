@@ -78,7 +78,7 @@ compound-engineering **skills** are used where they exist, by whichever name is 
 6. If Linear issue provided:
    - Check if a Linear MCP server is connected: look for tools ending in `get_issue` and `update_issue` whose name contains `linear` (for example `mcp__linear__get_issue`, or `mcp__plugin_dev_linear__get_issue` for older installs)
    - If available: Read the issue for context, extract acceptance criteria, note Figma/Postman links
-   - If not available: Show warning "Linear MCP not connected (see the Archon README, Optional integrations). Continuing without Linear." and skip Phase 2.5
+   - If not available: Show warning "Linear MCP not connected (see the Amplana README, Optional integrations). Continuing without Linear." and skip Phase 2.5
 7. If `--figma` is provided:
    - Extract the Figma URL from arguments
    - Store for use in Phase 3.1.1

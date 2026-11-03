@@ -7,14 +7,14 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_PLUGIN_DIR="$SCRIPT_DIR/plugins/archon-codex"
-TARGET_PLUGIN_DIR="$HOME/plugins/archon-codex"
+SOURCE_PLUGIN_DIR="$SCRIPT_DIR/plugins/amplana-codex"
+TARGET_PLUGIN_DIR="$HOME/plugins/amplana-codex"
 MARKETPLACE_DIR="$HOME/.agents/plugins"
 MARKETPLACE_PATH="$MARKETPLACE_DIR/marketplace.json"
 
 echo ""
 echo "=================================="
-echo "  Archon Codex Installer"
+echo "  Amplana Codex Installer"
 echo "=================================="
 echo ""
 
@@ -35,6 +35,12 @@ echo -n "Creating plugin directories... "
 mkdir -p "$HOME/plugins"
 mkdir -p "$MARKETPLACE_DIR"
 echo -e "${GREEN}OK${NC}"
+
+# Remove the symlink from before the rename to Amplana
+if [ -L "$HOME/plugins/archon-codex" ]; then
+    rm "$HOME/plugins/archon-codex"
+    echo "Removed old ~/plugins/archon-codex symlink (Archon is now Amplana)."
+fi
 
 echo -n "Installing plugin symlink... "
 if [ -L "$TARGET_PLUGIN_DIR" ]; then
@@ -64,10 +70,10 @@ import sys
 
 marketplace_path = sys.argv[1]
 plugin_entry = {
-    "name": "archon-codex",
+    "name": "amplana-codex",
     "source": {
         "source": "local",
-        "path": "./plugins/archon-codex",
+        "path": "./plugins/amplana-codex",
     },
     "policy": {
         "installation": "AVAILABLE",
@@ -93,7 +99,7 @@ data.setdefault("interface", {})
 data["interface"].setdefault("displayName", "Local Plugins")
 plugins = data.setdefault("plugins", [])
 
-plugins = [plugin for plugin in plugins if plugin.get("name") != "archon-codex"]
+plugins = [plugin for plugin in plugins if plugin.get("name") not in ("amplana-codex", "archon-codex")]
 plugins.append(plugin_entry)
 data["plugins"] = plugins
 
@@ -113,8 +119,8 @@ echo "  - Plugin symlink: $TARGET_PLUGIN_DIR"
 echo "  - Marketplace entry: $MARKETPLACE_PATH"
 echo ""
 echo "Usage examples:"
-echo "  Use Archon to brief user authentication: <the requirements you have decided>."
-echo "  Use Archon to execute specs/user-authentication/technical-spec.md."
+echo "  Use Amplana to brief user authentication: <the requirements you have decided>."
+echo "  Use Amplana to execute specs/user-authentication/technical-spec.md."
 echo ""
 echo -e "${YELLOW}If Codex is already open, restart it so it reloads local plugins.${NC}"
 echo ""

@@ -1,14 +1,14 @@
 {
-  "name": "archon-local",
+  "name": "amplana-local",
   "interface": {
-    "displayName": "Archon Local Plugins"
+    "displayName": "Amplana Local Plugins"
   },
   "plugins": [
     {
-      "name": "archon-codex",
+      "name": "amplana-codex",
       "source": {
         "source": "local",
-        "path": "./plugins/archon-codex"
+        "path": "./plugins/amplana-codex"
       },
       "policy": {
         "installation": "AVAILABLE",

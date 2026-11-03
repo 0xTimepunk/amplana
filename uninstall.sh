@@ -9,7 +9,7 @@ NC='\033[0m' # No Color
 
 echo ""
 echo "=================================="
-echo "  Archon Plugin Uninstaller"
+echo "  Amplana Plugin Uninstaller"
 echo "=================================="
 echo ""
 
@@ -19,19 +19,23 @@ if ! command -v claude &> /dev/null; then
 fi
 
 # Remove the plugin and the marketplace
-echo -n "Uninstalling dev@archon... "
-if claude plugin uninstall dev@archon > /dev/null 2>&1; then
+echo -n "Uninstalling dev@amplana... "
+if claude plugin uninstall dev@amplana > /dev/null 2>&1; then
     echo -e "${GREEN}REMOVED${NC}"
 else
     echo -e "${GREEN}NOT INSTALLED${NC}"
 fi
 
-echo -n "Removing archon marketplace... "
-if claude plugin marketplace remove archon > /dev/null 2>&1; then
+echo -n "Removing amplana marketplace... "
+if claude plugin marketplace remove amplana > /dev/null 2>&1; then
     echo -e "${GREEN}REMOVED${NC}"
 else
     echo -e "${GREEN}NOT FOUND${NC}"
 fi
+
+# Remove the install from before the rename to Amplana (dev@archon)
+claude plugin uninstall dev@archon > /dev/null 2>&1 && echo "Removed legacy dev@archon."
+claude plugin marketplace remove archon > /dev/null 2>&1 && echo "Removed legacy archon marketplace."
 
 # Remove the shell alias that older versions of install.sh added
 for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile"; do
