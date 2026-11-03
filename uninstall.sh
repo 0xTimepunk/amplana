@@ -13,49 +13,51 @@ echo "  Archon Plugin Uninstaller"
 echo "=================================="
 echo ""
 
-# Find shell RC file
-SHELL_RC=""
-if [ -f "$HOME/.zshrc" ]; then
-    SHELL_RC="$HOME/.zshrc"
-elif [ -f "$HOME/.bashrc" ]; then
-    SHELL_RC="$HOME/.bashrc"
-elif [ -f "$HOME/.bash_profile" ]; then
-    SHELL_RC="$HOME/.bash_profile"
+if ! command -v claude &> /dev/null; then
+    echo -e "${RED}Claude Code (claude) not found on PATH.${NC}"
+    exit 1
 fi
 
-# Remove shell alias
-echo -n "Removing shell alias... "
-if [ -n "$SHELL_RC" ] && grep -q "# Archon Claude Code plugin" "$SHELL_RC" 2>/dev/null; then
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        sed -i '' '/# Archon Claude Code plugin/d' "$SHELL_RC"
-        sed -i '' '/alias claude=.*plugin-dir.*archon/d' "$SHELL_RC"
-    else
-        sed -i '/# Archon Claude Code plugin/d' "$SHELL_RC"
-        sed -i '/alias claude=.*plugin-dir.*archon/d' "$SHELL_RC"
-    fi
+# Remove the plugin and the marketplace
+echo -n "Uninstalling dev@archon... "
+if claude plugin uninstall dev@archon > /dev/null 2>&1; then
     echo -e "${GREEN}REMOVED${NC}"
-    echo "  Removed alias from $SHELL_RC"
 else
-    echo -e "${GREEN}NOT FOUND (already clean)${NC}"
+    echo -e "${GREEN}NOT INSTALLED${NC}"
 fi
+
+echo -n "Removing archon marketplace... "
+if claude plugin marketplace remove archon > /dev/null 2>&1; then
+    echo -e "${GREEN}REMOVED${NC}"
+else
+    echo -e "${GREEN}NOT FOUND${NC}"
+fi
+
+# Remove the shell alias that older versions of install.sh added
+for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile"; do
+    if [ -f "$rc" ] && grep -q "# Archon Claude Code plugin" "$rc" 2>/dev/null; then
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' '/# Archon Claude Code plugin/d' "$rc"
+            sed -i '' '/alias claude=.*plugin-dir.*archon/d' "$rc"
+        else
+            sed -i '/# Archon Claude Code plugin/d' "$rc"
+            sed -i '/alias claude=.*plugin-dir.*archon/d' "$rc"
+        fi
+        echo -e "Removed legacy Archon alias from $rc ${YELLOW}(open a new shell or run: unalias claude)${NC}"
+    fi
+done
 
 echo ""
 echo "=================================="
 echo "  Uninstallation Complete!"
 echo "=================================="
 echo ""
-echo "Removed:"
-echo "  - /dev:spec command"
-echo "  - /dev:work command"
-echo "  - dev:specifier skill"
-echo "  - Linear MCP server configuration"
-echo "  - Figma MCP server configuration"
+echo "Removed: /dev:spec, /dev:work and the dev:specifier skill."
 echo ""
-echo "Note: compound-engineering agents remain available if installed separately."
+echo "Not touched:"
+echo "  - compound-engineering (remove with: claude plugin uninstall compound-engineering)"
+echo "  - Linear/Figma MCP servers you added (remove with: claude mcp remove linear / figma)"
+echo "  - specs/ folders in your projects"
 echo ""
-echo -e "${YELLOW}Next step:${NC}"
-echo "  Reload your shell: source $SHELL_RC"
-echo ""
-echo "Note: This script does not delete the plugin files."
-echo "To completely remove, delete this repository."
+echo "This script does not delete the plugin files. To remove them, delete this repository."
 echo ""

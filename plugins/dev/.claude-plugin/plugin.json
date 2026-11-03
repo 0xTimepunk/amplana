@@ -1,24 +1,17 @@
 {
   "name": "dev",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "General-purpose spec-driven development plugin. /dev:spec creates specs via AI interview + research. /dev:work executes specs using adaptive agent teams.",
   "author": {
-    "name": "Archon"
+    "name": "Timepunk",
+    "url": "https://github.com/0xTimepunk"
   },
+  "homepage": "https://github.com/0xTimepunk/archon",
+  "repository": "https://github.com/0xTimepunk/archon",
   "license": "MIT",
   "keywords": [
     "spec-driven-development",
     "agent-teams",
     "compound-engineering"
-  ],
-  "mcpServers": {
-    "linear": {
-      "type": "http",
-      "url": "https://mcp.linear.app/mcp"
-    },
-    "figma": {
-      "type": "http",
-      "url": "https://mcp.figma.com/mcp"
-    }
-  }
+  ]
 }

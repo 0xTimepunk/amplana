@@ -16,6 +16,27 @@ This command takes a work document (plan, specification, or todo file) and execu
 
 <input_document> #$ARGUMENTS </input_document>
 
+## Before You Start
+
+### Paths
+
+All `specs/...` paths are **relative to the repository root** (`git rev-parse --show-toplevel`), or to the current directory when it is not a git repository.
+
+### Tool check
+
+Check once which of these tools you have, and say in one line which execution features are available:
+
+| Tool | Used for | When missing |
+|------|----------|--------------|
+| AskUserQuestion | Clarifying questions, tier confirmation, compound prompt | **Non-interactive mode** (for example a headless `claude -p` run): ask nothing, take the recommended option at every decision point, and list each decision in the final summary |
+| TaskCreate / TaskUpdate / TaskList | Task tracking | Track tasks in `specs/{feature-name}/work-tasks.md` (one checklist line per task: subject, owner, status, blocked-by) |
+| TeamCreate / SendMessage | Lean and Full agent teams | Agent teams are an experimental Claude Code feature, on only when `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` is set. Without them, Lean and Full run as **parallel subagents** (see Phase 4) |
+| Task (called Agent in newer Claude Code) | Subagents (builders, reviewers) | Everything runs Solo |
+
+### Agent resolution
+
+Nothing in this command requires another plugin. Reviewers run as `subagent_type="general-purpose"` with the role prompts given below. If the [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin's 2.x agent types are installed (`compound-engineering:review:*` is in the agent type list), use those instead; compound-engineering 3.x no longer registers agent types. compound-engineering **skills** are used where they exist, by whichever name is installed (check the available skills list first): worktrees are `ce-worktree` (3.x) or `git-worktree` (2.x), branch review is `ce-code-review` (3.x) or `ce:review` (2.x).
+
 ## Execution Workflow
 
 ### Phase 1: Quick Start
@@ -25,35 +46,46 @@ This command takes a work document (plan, specification, or todo file) and execu
    - Read the work document completely
    - Review any references or links provided in the plan
    - If anything is unclear or ambiguous, ask clarifying questions now
+   - Check the sibling `spec.md` (if any): if its Approval box is not ticked, say so. Interactive: ask "The spec is not marked approved. Proceed anyway?" Non-interactive: proceed and list "spec not approved" in the final summary
    - Get user approval to proceed
    - **Do not skip this** - better to ask questions now than build the wrong thing
+   - Non-interactive mode: do not stop. Resolve each ambiguity with the simplest reading of the spec and note it as an assumption
 
 2. **Setup Environment**
 
-   Choose your work style:
+   Never commit to the default branch. First find where you are:
 
-   **Option A: Live work on current branch**
    ```bash
-   git checkout main && git pull origin main
-   git checkout -b feature-branch-name
+   git rev-parse --is-inside-work-tree 2>/dev/null || echo "not a git repo"
+   git status --porcelain            # uncommitted changes?
+   git remote                        # any remotes?
+   # Default branch: the remote's HEAD if there is a remote, else the current branch
+   DEFAULT=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##')
+   [ -z "$DEFAULT" ] && DEFAULT=$(git rev-parse --abbrev-ref HEAD)
    ```
 
-   **Option B: Parallel work with worktree (recommended for parallel development)**
+   - **Not a git repo:** ask whether to run `git init` (non-interactive: work in place without git and say so). Skip the rest of this step.
+   - **Uncommitted changes** (ignore untracked files under `specs/{feature-name}/`: they are this spec, they carry over to the new branch, and they are committed with the work): do not switch branches. Ask whether to branch from the current state (non-interactive: create the feature branch from the current HEAD with `git checkout -b feat/{feature-name}`, keeping the changes), then skip the options below.
+
+   With a clean working tree, choose a work style (ask the user; non-interactive: Option A):
+
+   **Option A: Feature branch in this checkout**
    ```bash
-   # Ask user first: "Work in parallel with worktree or on current branch?"
-   # If worktree:
-   skill: git-worktree
-   # The skill will create a new branch from main in an isolated worktree
+   git checkout "$DEFAULT"
+   git remote | grep -q . && git pull --ff-only origin "$DEFAULT"   # only when a remote exists
+   git checkout -b feat/{feature-name}
    ```
+   If you are already on a non-default feature branch the user created for this work, stay on it.
 
-   **Recommendation**: Use worktree if:
-   - You want to work on multiple features simultaneously
-   - You want to keep main clean while experimenting
-   - You plan to switch between branches frequently
+   **Option B: Isolated worktree (for parallel development)**
+   - With compound-engineering: `Skill(skill="compound-engineering:ce-worktree")` (2.x: `compound-engineering:git-worktree`)
+   - Otherwise:
+     ```bash
+     git worktree add -b feat/{feature-name} "../$(basename "$PWD")-{feature-name}" "$DEFAULT"
+     ```
+     then work inside that directory.
 
-   Use live branch if:
-   - You're working on a single feature
-   - You prefer staying in the main repository
+   **Recommendation**: Use a worktree if you want to work on several features at once or keep the main checkout untouched. Use a feature branch for a single feature.
 
 ---
 
@@ -65,9 +97,9 @@ Analyze the technical spec to determine team size. Parse the spec and extract th
 
 | Metric | How to Count | Weight |
 |--------|-------------|--------|
-| Phase count | Number of implementation phases in spec | x3 |
-| New file count | Files to create from scratch | x2 |
-| Modified file count | Existing files to change | x1.5 |
+| Phase count | Number of implementation phases in spec (count 1 if the spec has no phases section) | x3 |
+| New file count | Files to create from scratch (not counting test files) | x2 |
+| Modified file count | Existing files to change (not counting test files) | x1.5 |
 | Deleted file count | Files to remove | x0.5 |
 | Test file count | Test files to create or modify | x1 |
 | Package/module scope | Distinct packages/modules touched | x2 |
@@ -111,17 +143,21 @@ Parallel streams identified:
 ...
 ```
 
-Use AskUserQuestion to confirm tier or let user override:
+Use AskUserQuestion to confirm tier or let user override (non-interactive mode: proceed with the selected tier):
 - "Proceed with {tier} execution (Recommended)"
 - "Override to Solo"
 - "Override to Lean"
 - "Override to Full"
+
+If the tier is Lean or Full and TeamCreate is not available, say so in the announcement: "Agent teams are off (set CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 to enable them); running {tier} as parallel subagents."
 
 ---
 
 ### Phase 3: Task Decomposition
 
 Break the spec into tasks using TaskCreate. Every task gets created regardless of tier — the tier only determines how they're executed.
+
+Without TaskCreate, write the same tasks to `specs/{feature-name}/work-tasks.md` and keep that file current instead (`- [ ] T1 Create game loop in index.html | owner: lead | blocked-by: none`). Read "TaskCreate", "TaskUpdate" and "TaskList" below as edits to and reads of that file.
 
 #### Task Structure
 
@@ -194,9 +230,11 @@ For each task (respecting dependency order):
   8. Check TaskList for next unblocked task
 ```
 
-Run tests after completing each phase's worth of tasks (not after every single task).
+Run tests after completing each phase's worth of tasks (not after every single task). If the project has no test setup, use the checks the spec's Test Plan names (for example a small Node script for pure logic, or loading the page in a browser) rather than adding a test framework the spec did not ask for.
 
 #### Lean Team Execution
+
+Needs agent teams (TeamCreate). Without them, use **Lean/Full without agent teams** below.
 
 For work with 2 parallel streams.
 
@@ -234,7 +272,7 @@ For work with 2 parallel streams.
 
 #### Full Team Execution
 
-For complex work with 3+ parallel streams.
+For complex work with 3+ parallel streams. Needs agent teams (TeamCreate); without them, use **Lean/Full without agent teams** below.
 
 ```
 1. TeamCreate(team_name="dev-{feature-name}")
@@ -303,6 +341,26 @@ For complex work with 3+ parallel streams.
    - Proceed to Phase 5
 ```
 
+#### Lean/Full without agent teams
+
+When TeamCreate is not available (agent teams off, or a host that does not offer them), keep the tier's parallelism with plain subagents:
+
+```
+1. Lead does the foundation tasks first, alone.
+2. For each remaining stream, in ONE message (so they run in parallel):
+   Task(
+     subagent_type="general-purpose",
+     prompt="You are a builder for {feature-name}. Your tasks: {task list with descriptions}.
+       You own only these files: {paths}. Do not edit any other file; other builders are working beside you.
+       Follow existing codebase patterns. Run the relevant checks after each task.
+       Reply with: files changed, checks run and their results, anything left undone."
+   )
+3. Lead marks each builder's tasks completed from its reply, then integrates and runs the full checks.
+4. For Full tier, optionally run one reviewer subagent on the integrated result (see Phase 5).
+```
+
+Streams must have disjoint file ownership. If two streams need the same file, merge them into one stream or run them in sequence. If no subagent tool (`Task`, or `Agent` in newer Claude Code) is available either, run the tasks Solo.
+
 #### Communication Discipline (All Tiers)
 
 - **No ack messages** — don't send "got it" or "working on it"
@@ -315,7 +373,7 @@ For complex work with 3+ parallel streams.
 For UI work with Figma designs (any tier):
 
 - Implement components following design specs
-- Use figma-design-sync agent iteratively to compare
+- With the compound-engineering 2.x `compound-engineering:design:figma-design-sync` agent and a connected Figma MCP server, compare iteratively; otherwise compare against `specs/{feature-name}/design/specification.md` (and the Figma MCP tools, if connected) yourself
 - Fix visual differences identified
 - Repeat until implementation matches design
 
@@ -347,7 +405,7 @@ For UI work with Figma designs (any tier):
 
 3. **Consider Reviewer Agents** (Optional)
 
-   Use for complex, risky, or large changes. Run in parallel with Task tool:
+   Use for complex, risky, or large changes. Run in parallel with the subagent tool. The names below are compound-engineering 2.x agent types; without them, treat each name as a role and give a `general-purpose` agent a one-line role prompt like the examples further down:
 
    - **code-simplicity-reviewer**: Check for unnecessary complexity
    - **performance-oracle**: Check for performance issues
@@ -360,13 +418,24 @@ For UI work with Figma designs (any tier):
    - **dhh-rails-reviewer**: DHH-style Rails review
 
    ```
+   # compound-engineering 2.x agent types present
    Task(subagent_type="compound-engineering:review:code-simplicity-reviewer", prompt="Review changes for simplicity")
    Task(subagent_type="compound-engineering:review:security-sentinel", prompt="Scan for security vulnerabilities")
+
+   # Otherwise (default): the same roles as general-purpose agents
+   Task(subagent_type="general-purpose", prompt="You are a code simplicity reviewer. Review the diff against {default branch} for unnecessary complexity, dead code and YAGNI. Report findings with file:line; do not edit.")
+   Task(subagent_type="general-purpose", prompt="You are a security reviewer. Review the diff against {default branch} for injection, unsafe input handling, secrets and auth flaws. Report findings with file:line; do not edit.")
    ```
+
+   For a whole-branch review with compound-engineering you can also run `Skill(skill="compound-engineering:ce-code-review")` (2.x: `compound-engineering:ce:review`).
 
    Present findings to user and address critical issues.
 
-4. **Final Validation Checklist**
+4. **Commit**
+
+   Commit the work on the feature branch with a conventional commit message (for example `feat(dodge-game): add canvas dodge game`). Include the `specs/{feature-name}/` files. Do not push; tell the user the branch name.
+
+5. **Final Validation Checklist**
    - [ ] All tasks marked completed (verify via TaskList)
    - [ ] All tests pass
    - [ ] Linting passes (if configured)
@@ -378,7 +447,7 @@ For UI work with Figma designs (any tier):
 
 ### Phase 6: Shutdown & Compound
 
-#### Team Shutdown (Lean/Full tiers only)
+#### Team Shutdown (Lean/Full tiers with agent teams only)
 
 ```
 1. Verify all tasks completed via TaskList
@@ -392,6 +461,8 @@ For UI work with Figma designs (any tier):
 ```
 
 #### Compound Learnings
+
+This step is **opt-in**: nothing is written to `specs/knowledge/` unless the user says yes. In non-interactive mode, skip it and end with the summary (what shipped, checks run, assumptions and decisions taken).
 
 **Prompt the user:**
 
@@ -411,7 +482,7 @@ AskUserQuestion:
 
 **Execution: Parallel Subagents**
 
-Launch these specialized subagents IN PARALLEL:
+Launch these as `general-purpose` subagents IN PARALLEL (they are roles, not installed agent types). For a small change, one agent doing all six roles in order is enough:
 
 **1. Context Analyzer**
    - Extracts conversation history
@@ -425,7 +496,7 @@ Launch these specialized subagents IN PARALLEL:
    - Returns: Solution content block
 
 **3. Related Docs Finder**
-   - Searches `/specs/knowledge/` for related documentation
+   - Searches `specs/knowledge/` for related documentation
    - Identifies cross-references and links
    - Finds related GitHub issues
    - Returns: Links and relationships
@@ -437,7 +508,7 @@ Launch these specialized subagents IN PARALLEL:
    - Returns: Prevention/testing content
 
 **5. Category Classifier**
-   - Determines optimal `/specs/knowledge/` category
+   - Determines optimal `specs/knowledge/` category
    - Validates category against schema
    - Suggests filename based on slug
    - Returns: Final path and filename
@@ -449,7 +520,7 @@ Launch these specialized subagents IN PARALLEL:
    - Creates the file in correct location
 
 **7. Optional: Specialized Agent Invocation** (Post-Documentation)
-   Based on problem type detected, automatically invoke applicable agents:
+   Based on problem type detected, invoke applicable reviewers (compound-engineering 2.x agent types if listed, otherwise `general-purpose` agents with the matching role):
    - **performance_issue** -> `performance-oracle`
    - **security_issue** -> `security-sentinel`
    - **database_issue** -> `data-integrity-guardian`
@@ -466,7 +537,7 @@ Launch these specialized subagents IN PARALLEL:
 
 **What It Creates**
 
-Organized documentation at `/specs/knowledge/[category]/[filename].md`
+Organized documentation at `specs/knowledge/[category]/[filename].md`
 
 Categories auto-detected from problem:
 - build-errors/
@@ -489,11 +560,11 @@ Primary Subagent Results:
   Solution Extractor: Extracted {n} code fixes
   Related Docs Finder: Found {n} related issues
   Prevention Strategist: Generated test cases
-  Category Classifier: /specs/knowledge/{category}/
+  Category Classifier: specs/knowledge/{category}/
   Documentation Writer: Created complete markdown
 
 File created:
-- /specs/knowledge/{category}/{filename}.md
+- specs/knowledge/{category}/{filename}.md
 
 This documentation will be searchable for future reference when similar
 issues occur.
@@ -595,7 +666,7 @@ For most features: tests + linting + following patterns is sufficient.
 This creates a compounding knowledge system:
 
 1. First time you solve a problem -> Research (30 min)
-2. Document the solution -> /specs/knowledge/{category}/{name}.md (5 min)
+2. Document the solution -> specs/knowledge/{category}/{name}.md (5 min)
 3. Next time similar issue occurs -> Quick lookup (2 min)
 4. Knowledge compounds -> Team gets smarter
 

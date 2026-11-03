@@ -1,7 +1,7 @@
 ---
 name: dev:spec
 description: Create a feature specification using AI interview and compound engineering
-argument-hint: <feature-name> [--linear LINEAR-XXX] [--figma <figma-url>]
+argument-hint: <feature-name> [requirements...] [--no-interview] [--linear LINEAR-XXX] [--figma <figma-url>]
 ---
 
 # /dev:spec Command
@@ -12,32 +12,73 @@ Create a comprehensive feature specification through an interactive interview, p
 
 <feature_name>$ARGUMENTS</feature_name>
 
+The first word is the feature name (kebab-case it if needed). Any other text that is not a flag is the **requirements brief**, for example:
+
+```
+/dev:spec dodge-game "Single-file HTML canvas game: arrow keys move a square, red blocks fall, score is survival time, R restarts"
+```
+
+## Before You Start
+
+### Paths
+
+All `specs/...` paths in this command are **relative to the repository root** (`git rev-parse --show-toplevel`), or to the current directory when it is not a git repository. Never write to an absolute `/specs/` path.
+
+### Interview mode
+
+Pick one, and say which in your first message:
+
+- **Interactive** (default): AskUserQuestion is available and no `--no-interview` flag was passed.
+- **Brief only**: AskUserQuestion is not available (for example a headless `claude -p` run), or `--no-interview` was passed. Do not ask questions. Build the interview notes from the requirements brief, the Linear issue (if any) and the codebase. Where the brief is silent, choose the simplest reasonable option and record it under **Assumptions** in `interview-notes.md`. If there is no brief at all and no way to ask, stop and print the usage example above.
+
+In brief-only mode, every place below that says "use AskUserQuestion" means: take the recommended or first option and record the choice.
+
+### Agent resolution
+
+Nothing here requires another plugin. Research runs as `general-purpose` subagents with the role prompts below. If the [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin's 2.x agent types are installed, they are used instead. Check the agent types available to the subagent tool (`Task`; called `Agent` in newer Claude Code) once, before Phase 3:
+
+- If `compound-engineering:research:repo-research-analyst` is listed (compound-engineering 2.x), use the **compound-engineering agent** for each role below.
+- Otherwise (compound-engineering not installed, or 3.x, which no longer registers agent types) use `subagent_type="general-purpose"` and start its prompt with the **role prompt**, followed by the same task prompt.
+- If no subagent tool is available, do the research yourself, in sequence, and write the same files.
+
+| Role | compound-engineering 2.x agent | Role prompt (prefix for a `general-purpose` agent) |
+|------|---------------------------|------------------------------------------------------|
+| Repo research | `compound-engineering:research:repo-research-analyst` | "You are a repository research analyst. Map the structure, conventions, similar code and test setup relevant to this feature. Cite file paths with line numbers." |
+| Best practices | `compound-engineering:research:best-practices-researcher` | "You are a best-practices researcher. Summarise current, widely accepted practice for this kind of feature, with sources." |
+| Framework docs | `compound-engineering:research:framework-docs-researcher` | "You are a framework documentation researcher. Find the exact APIs, versions and constraints of the libraries or platform this feature uses, with links." |
+| Spec flow | `compound-engineering:workflow:spec-flow-analyzer` | "You are a spec flow analyst. Walk every user flow in this feature description and list missing states, edge cases, error paths and unclear requirements." |
+| Figma design | `compound-engineering:design:figma-design-sync` | "You are a design spec extractor. Use the Figma MCP tools to read the given URL and write a design spec." (needs a Figma MCP server either way) |
+
+Tell the user once which set is in use, for example: "Using general-purpose research agents (no compound-engineering 2.x agent types found)."
+
+compound-engineering **skills** are used where they exist, by whichever name is installed: spec review is `compound-engineering:ce-doc-review` (3.x) or `compound-engineering:document-review` (2.x). Check the available skills list before calling one.
+
 ## Workflow
 
 ### Phase 1: Setup
 
-1. Parse the feature name from the input
+1. Parse the feature name, the requirements brief and the flags from the input
    - If `--linear LINEAR-XXX` is provided, extract the Linear issue ID
 2. Determine spec paths:
-   - Spec directory: `/specs/{feature-name}/`
-   - Concise spec: `/specs/{feature-name}/spec.md`
-   - Technical spec: `/specs/{feature-name}/technical-spec.md`
-   - Interview notes: `/specs/{feature-name}/interview-notes.md`
-   - Research folder: `/specs/{feature-name}/research/`
+   - Spec directory: `specs/{feature-name}/`
+   - Concise spec: `specs/{feature-name}/spec.md`
+   - Technical spec: `specs/{feature-name}/technical-spec.md`
+   - Interview notes: `specs/{feature-name}/interview-notes.md`
+   - Research folder: `specs/{feature-name}/research/`
 3. Check if spec directory already exists:
-   - If exists, use AskUserQuestion: "Spec already exists. Continue editing or start fresh?"
+   - If exists, use AskUserQuestion: "Spec already exists. Continue editing or start fresh?" (brief-only mode: continue editing)
 4. **Check if interview-notes.md already exists:**
-   - If `/specs/{feature-name}/interview-notes.md` exists, **skip Phase 2 entirely**
+   - If `specs/{feature-name}/interview-notes.md` exists, **skip Phase 2 entirely**
    - Inform user: "Found existing interview notes. Skipping interview and proceeding to Phase 3."
-5. Create `/specs/{feature-name}/` and `/specs/{feature-name}/research/` directories if needed
+5. Create `specs/{feature-name}/` and `specs/{feature-name}/research/` directories if needed
 6. If Linear issue provided:
-   - Check if Linear MCP is available
+   - Check if a Linear MCP server is connected: look for tools ending in `get_issue` and `update_issue` whose name contains `linear` (for example `mcp__linear__get_issue`, or `mcp__plugin_dev_linear__get_issue` for older installs)
    - If available: Read the issue for context, extract acceptance criteria, note Figma/Postman links
-   - If not available: Show warning "Linear MCP not configured. Proceeding with manual interview."
+   - If not available: Show warning "Linear MCP not connected (see the Archon README, Optional integrations). Continuing without Linear." and skip Phase 2.5
 7. If `--figma` is provided:
    - Extract the Figma URL from arguments
    - Store for use in Phase 3.1.1
-   - Note: Figma MCP must be configured (requires Figma account with Dev or Full seat)
+   - Note: needs a connected Figma MCP server (Figma account with a Dev or Full seat). If none is connected, keep the URL in the technical spec's References and skip Phase 3.1.1
 
 ---
 
@@ -45,7 +86,9 @@ Create a comprehensive feature specification through an interactive interview, p
 
 **SKIP THIS PHASE if interview-notes.md already exists (checked in Phase 1 step 4)**
 
-Conduct a thorough interview using **AskUserQuestion** tool. Ask 2-4 focused questions at a time covering:
+**Brief-only mode:** do not interview. Write `specs/{feature-name}/interview-notes.md` with these sections, filled from the brief, the Linear issue and the codebase: Summary, Requirements (functional, non-functional), Acceptance Criteria (checkbox list), Technical Decisions, Assumptions (each choice you made where the brief was silent), Open Questions, Testing Strategy. Then go to Phase 2.5.
+
+**Interactive mode:** conduct a thorough interview using the **AskUserQuestion** tool. If a requirements brief was given, start from it and ask only about what it leaves open. Ask 2-4 focused questions at a time covering:
 
 **Technical Implementation**
 - Architecture approach
@@ -85,7 +128,7 @@ Conduct a thorough interview using **AskUserQuestion** tool. Ask 2-4 focused que
 - **Reference codebase research findings** to ask informed questions
 - Continue until all sections have sufficient content
 
-**After interview:** Write the interview transcript to `/specs/{feature-name}/interview-notes.md`
+**After interview:** Write the interview transcript to `specs/{feature-name}/interview-notes.md`
 
 ---
 
@@ -107,9 +150,9 @@ After interview completes and interview-notes.md is written, sync the gathered r
    - Integration points
    - Any TBD items
 
-3. **Read current Linear issue:**
+3. **Read current Linear issue** with the Linear `get_issue` tool found in Phase 1 (the tool name depends on how the server was added):
    ```
-   mcp__plugin_dev_linear__get_issue(id="{LINEAR-XXX}")
+   mcp__linear__get_issue(id="{LINEAR-XXX}")
    ```
 
 4. **Update issue description:**
@@ -120,9 +163,9 @@ After interview completes and interview-notes.md is written, sync the gathered r
    - If found: Replace entire section content up to next heading
    - If not found: Append new `## Technical Notes` section after Acceptance Criteria
 
-5. **Write updated description:**
+5. **Write updated description** (this writes to Linear; in interactive mode, show the new sections and confirm with AskUserQuestion first):
    ```
-   mcp__plugin_dev_linear__update_issue(
+   mcp__linear__update_issue(
      id="{LINEAR-XXX}",
      description="{updated_description_markdown}"
    )
@@ -160,7 +203,7 @@ After interview completes and interview-notes.md is written, sync the gathered r
 ### Phase 3: Research & Technical Planning
 
 **First, read the interview notes:**
-1. Read `/specs/{feature-name}/interview-notes.md` to extract all gathered requirements
+1. Read `specs/{feature-name}/interview-notes.md` to extract all gathered requirements
 2. Parse the interview transcript to identify:
    - Feature summary and goals
    - Functional and non-functional requirements
@@ -170,19 +213,27 @@ After interview completes and interview-notes.md is written, sync the gathered r
 
 #### 3.1 Repository Research & Context Gathering
 
-Run these three agents **in parallel** using the Task tool:
+Run these three agents **in parallel** using the subagent tool (agent types from **Agent resolution** above). Every research prompt must also say: the repository root path, and "Return your findings in your reply; do not write or edit files." You write the research files from their replies:
 
 ```
+# compound-engineering 2.x agent types present
 Task(subagent_type="compound-engineering:research:repo-research-analyst", prompt="{feature_description_from_interview}")
 Task(subagent_type="compound-engineering:research:best-practices-researcher", prompt="{feature_description_from_interview}")
 Task(subagent_type="compound-engineering:research:framework-docs-researcher", prompt="{feature_description_from_interview}")
+
+# Otherwise (default)
+Task(subagent_type="general-purpose", prompt="{repo research role prompt}\n\nRepository: {repo root}. Return findings in your reply; do not write files.\n\n{feature_description_from_interview}")
+Task(subagent_type="general-purpose", prompt="{best practices role prompt}\n\nRepository: {repo root}. Return findings in your reply; do not write files.\n\n{feature_description_from_interview}")
+Task(subagent_type="general-purpose", prompt="{framework docs role prompt}\n\nRepository: {repo root}. Return findings in your reply; do not write files.\n\n{feature_description_from_interview}")
 ```
+
+If the feature touches at most two files and uses no external library, run only the repo research agent, and write a one-line `best-practices.md` and `framework-docs.md` saying why they were skipped. Always run the spec flow analysis.
 
 **Save Research Outputs:**
 After each agent completes, write its findings to the research folder:
-- `/specs/{feature-name}/research/repo-analysis.md` - Repository patterns, similar code, conventions
-- `/specs/{feature-name}/research/best-practices.md` - External best practices and recommendations
-- `/specs/{feature-name}/research/framework-docs.md` - Framework documentation and examples
+- `specs/{feature-name}/research/repo-analysis.md` - Repository patterns, similar code, conventions
+- `specs/{feature-name}/research/best-practices.md` - External best practices and recommendations
+- `specs/{feature-name}/research/framework-docs.md` - Framework documentation and examples
 
 **Reference Collection:**
 - [ ] Document all research findings with specific file paths (e.g., `app/services/example_service.rb:42`)
@@ -192,11 +243,11 @@ After each agent completes, write its findings to the research folder:
 
 #### 3.1.1 Figma Design Specification (if --figma provided)
 
-**ONLY run if `--figma` flag was used in Phase 1**
+**ONLY run if `--figma` flag was used in Phase 1 and a Figma MCP server is connected**
 
-1. Create design directory: `/specs/{feature-name}/design/`
+1. Create design directory: `specs/{feature-name}/design/`
 
-2. Run Figma design sync agent:
+2. Run the Figma design agent (`general-purpose` with the Figma role prompt unless the compound-engineering 2.x agent is listed):
    ```
    Task(subagent_type="compound-engineering:design:figma-design-sync", prompt="
    Extract design specifications from Figma URL: {figma_url}
@@ -213,9 +264,9 @@ After each agent completes, write its findings to the research folder:
    ")
    ```
 
-3. Save output to `/specs/{feature-name}/design/specification.md`
+3. Save output to `specs/{feature-name}/design/specification.md`
 
-4. Take screenshot of design and save to `/specs/{feature-name}/design/reference.png`
+4. Take screenshot of design and save to `specs/{feature-name}/design/reference.png`
 
 5. Update technical-spec.md template to include design reference section:
    ```markdown
@@ -226,14 +277,18 @@ After each agent completes, write its findings to the research folder:
 
 #### 3.2 SpecFlow Analysis
 
-After research completes, run the spec-flow-analyzer:
+After research completes, run the spec flow analysis:
 
 ```
-Task(subagent_type="compound-engineering:workflow:spec-flow-analyzer", prompt="{feature_description_with_research_findings}")
+# compound-engineering 2.x agent types present
+Task(subagent_type="compound-engineering:workflow:spec-flow-analyzer", prompt="{repo root}\n\n{feature_description_with_research_findings}")
+
+# Otherwise (default)
+Task(subagent_type="general-purpose", prompt="{spec flow role prompt}\n\nRepository: {repo root}. Return findings in your reply; do not write files.\n\n{feature_description_with_research_findings}")
 ```
 
 **Save SpecFlow Output:**
-Write the analysis to `/specs/{feature-name}/research/specflow-analysis.md`
+Write the analysis to `specs/{feature-name}/research/specflow-analysis.md`
 
 **SpecFlow Analyzer Output:**
 - [ ] Review SpecFlow analysis results
@@ -242,7 +297,7 @@ Write the analysis to `/specs/{feature-name}/research/specflow-analysis.md`
 
 #### 3.3 Technical Spec Generation
 
-Based on all gathered research, write the technical specification to `/specs/{feature-name}/technical-spec.md`.
+Based on all gathered research, write the technical specification to `specs/{feature-name}/technical-spec.md`.
 
 **Choose detail level based on complexity:**
 
@@ -418,9 +473,9 @@ Based on all gathered research, write the technical specification to `/specs/{fe
 
 **IMPORTANT: No additional questions in this phase. Pure distillation.**
 
-Read the technical spec from Phase 3 (`/specs/{feature-name}/technical-spec.md`) and distill into a concise spec for stakeholder approval.
+Read the technical spec from Phase 3 (`specs/{feature-name}/technical-spec.md`) and distill into a concise spec for stakeholder approval.
 
-Write to `/specs/{feature-name}/spec.md` using this **strict template** (enforced):
+Write to `specs/{feature-name}/spec.md` using this **strict template** (enforced). Always write Status as Draft and leave the Approval box unticked: only a human approves a spec.
 
 ```markdown
 # {Feature Name} Spec
@@ -430,7 +485,7 @@ Write to `/specs/{feature-name}/spec.md` using this **strict template** (enforce
 - Milestone: {milestone-name}
 - Linear Issue: {LINEAR-XXX} or N/A
 - Interview Date: {date}
-- Status: [ ] Draft / [ ] Ready for Review / [x] Approved
+- Status: [x] Draft / [ ] Ready for Review / [ ] Approved
 
 ## Summary
 {1-2 paragraph executive summary}
@@ -497,7 +552,7 @@ After approval, run: `/dev:work specs/{feature-name}/technical-spec.md`
 
 ### Phase 5: Post-Generation Options
 
-Present completion summary and options using **AskUserQuestion**:
+Present the completion summary. In interactive mode, follow it with the options below using **AskUserQuestion**. In brief-only mode, print the summary and the next-step line (`/dev:work specs/{feature-name}/technical-spec.md`) and stop.
 
 ```
 Spec created at: specs/{feature-name}/
@@ -518,31 +573,31 @@ Files:
 **Options:**
 1. **Open in editor** - Open the spec files for review
 2. **Deepen research** - Enhance each section with parallel research agents (best practices, performance, UI)
-3. **Get feedback** - Run `/plan_review` for feedback from reviewers (DHH, Kieran, Simplicity)
+3. **Get feedback** - Review the technical spec for gaps, contradictions and scope
 4. **Start `/dev:work`** - Begin implementing this spec locally
-5. **Start `/dev:work` on remote** - Begin implementing in Claude Code web (use `&` to run in background)
-6. **Create Linear issue** - Create issue in Linear with spec content
-7. **Simplify** - Reduce detail level of technical spec
+5. **Create Linear issue** - Create issue in Linear with spec content (only offer when a Linear MCP server is connected)
+6. **Simplify** - Reduce detail level of technical spec
+
+AskUserQuestion takes at most 4 options per question: show the first four that apply and let **Other** cover the rest.
 
 **Based on selection:**
 
-- **Open in editor** -> Run `open specs/{feature-name}/spec.md`
-- **Deepen research** -> Run additional targeted research agents on weak sections
-- **Get feedback** -> `Skill(skill="compound-engineering:plan_review", args="specs/{feature-name}/technical-spec.md")`
+- **Open in editor** -> Run `open specs/{feature-name}/spec.md` (macOS) or `xdg-open` (Linux)
+- **Deepen research** -> Run additional targeted research agents (same roles as Phase 3.1) on the weak sections and fold the findings into the technical spec
+- **Get feedback** -> If a compound-engineering doc review skill is installed: `Skill(skill="compound-engineering:ce-doc-review", args="specs/{feature-name}/technical-spec.md")` (2.x: `compound-engineering:document-review`). Otherwise: one `general-purpose` agent prompted "You are a spec reviewer. Find gaps, contradictions, untestable criteria and scope creep in this spec. Report, do not edit." with the spec path
 - **`/dev:work`** -> `Skill(skill="dev:work", args="specs/{feature-name}/technical-spec.md")`
-- **`/dev:work` on remote** -> Run `/dev:work specs/{feature-name}/technical-spec.md &` to start work in background for Claude Code web
-- **Create Linear issue** -> Create Linear issue with spec.md content (requires Linear MCP)
+- **Create Linear issue** -> Create Linear issue with spec.md content
 - **Simplify** -> Ask "What should I simplify?" then regenerate simpler version
 - **Other** (automatically provided) -> Accept free text for rework or specific changes
 
-**Loop** back to options after Simplify or Other changes until user selects `/dev:work` or `/plan_review`.
+**Loop** back to options after Simplify, Get feedback or Other changes until the user selects `/dev:work` or ends the session.
 
 ---
 
 ## Output Structure
 
 ```
-/specs/{feature-name}/
+specs/{feature-name}/
 |- spec.md              # Stakeholder spec (strict template - for approval)
 |- technical-spec.md    # Detailed technical spec with implementation guidance
 |- interview-notes.md   # Interview transcript
@@ -561,6 +616,12 @@ Files:
 ```bash
 # Basic usage
 /dev:spec user-authentication
+
+# Requirements up front (the interview only asks about gaps)
+/dev:spec dodge-game "Single-file HTML canvas game: arrow keys move, blocks fall, survival-time score"
+
+# No interview at all (also the automatic mode in headless `claude -p` runs)
+/dev:spec dodge-game --no-interview "Single-file HTML canvas game: arrow keys move, blocks fall, survival-time score"
 
 # With Linear issue reference
 /dev:spec user-authentication --linear LINEAR-123
