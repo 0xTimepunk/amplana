@@ -1,0 +1,24 @@
+{
+  "name": "archon",
+  "owner": {
+    "name": "Timepunk",
+    "url": "https://github.com/0xTimepunk"
+  },
+  "metadata": {
+    "description": "Archon: spec-driven development with AI interviews and adaptive agent teams",
+    "version": "1.1.0"
+  },
+  "plugins": [
+    {
+      "name": "dev",
+      "description": "/dev:spec creates specs via AI interview and research agents. /dev:work executes them with adaptive agent teams.",
+      "author": {
+        "name": "Timepunk",
+        "url": "https://github.com/0xTimepunk"
+      },
+      "homepage": "https://github.com/0xTimepunk/archon",
+      "license": "MIT",
+      "source": "./plugins/dev"
+    }
+  ]
+}

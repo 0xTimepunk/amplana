@@ -19,9 +19,10 @@ This is a **plugin repository**, not application code. It defines commands, skil
 
 ```
 archon/
+├── .claude-plugin/marketplace.json  # Claude Code marketplace (name: archon) listing plugins/dev
 ├── plugins/dev/                     # Claude Code plugin
 │   ├── .claude-plugin/
-│   │   └── plugin.json              # Plugin metadata (name: dev, v1.0.0)
+│   │   └── plugin.json              # Plugin metadata (name: dev, v1.1.0)
 │   ├── commands/                    # User-invocable slash commands
 │   │   ├── spec.md                  # /dev:spec command
 │   │   └── work.md                  # /dev:work command
@@ -41,8 +42,11 @@ archon/
 │
 ├── CLAUDE.md                        # This file
 ├── README.md                        # User-facing docs
-├── install.sh                       # Plugin installation
-├── uninstall.sh                     # Plugin removal
+├── install.sh                       # Claude install via `claude plugin` (no shell rc edits)
+├── uninstall.sh                     # Claude plugin removal
+├── install-codex.sh                 # Codex home-local install
+├── uninstall-codex.sh               # Codex removal
+├── LICENSE
 └── .gitignore
 ```
 
@@ -71,7 +75,7 @@ Plan (80%) → Work (20%) → Assess → Compound
 - Human reviews findings and signs off
 
 ### 4. Compound
-- Capture learnings in `/specs/knowledge/`
+- Optionally capture learnings in `specs/knowledge/` (only when the user says yes)
 - Each documented solution compounds team knowledge
 
 ---
@@ -80,10 +84,10 @@ Plan (80%) → Work (20%) → Assess → Compound
 
 ### For Plugin Development
 
-Claude commands and skills live in `/plugins/dev/`. Codex plugin assets live in `/plugins/archon-codex/`. When creating or updating:
+Claude commands and skills live in `plugins/dev/`. Codex plugin assets live in `plugins/archon-codex/`. When creating or updating:
 
-1. **Claude Commands**: `/plugins/dev/commands/{name}.md` with YAML frontmatter
-2. **Skills**: `/plugins/dev/skills/{name}/SKILL.md` or `/plugins/archon-codex/skills/{name}/SKILL.md`
+1. **Claude Commands**: `plugins/dev/commands/{name}.md` with YAML frontmatter
+2. **Skills**: `plugins/dev/skills/{name}/SKILL.md` or `plugins/archon-codex/skills/{name}/SKILL.md`
 3. Keep workflow files focused and single-responsibility
 4. Test the relevant host workflow before committing
 5. Update the relevant manifest version when behavior changes materially
@@ -109,37 +113,36 @@ description: When this skill should auto-trigger
 
 ---
 
-## Compound Engineering Agents
+## Compound Engineering (optional)
 
-The following agents are available via Claude Code's Task tool (no bundling required):
+Archon must work without any other plugin. Every place that uses compound-engineering has a `general-purpose` fallback with a role prompt, written next to it in the command. Keep it that way when editing.
 
-**Research agents** (used by `/dev:spec`):
-- `compound-engineering:research:repo-research-analyst`
-- `compound-engineering:research:best-practices-researcher`
-- `compound-engineering:research:framework-docs-researcher`
-- `compound-engineering:workflow:spec-flow-analyzer`
+- **compound-engineering 2.x** registers agent types such as `compound-engineering:research:repo-research-analyst` and `compound-engineering:review:security-sentinel`. The commands use them when they appear in the agent type list.
+- **compound-engineering 3.x** (current) registers no agent types, only skills. The commands use these skills when installed, by name: `ce-doc-review` (2.x `document-review`), `ce-code-review` (2.x `ce:review`), `ce-worktree` (2.x `git-worktree`).
 
-**Review agents** (used by `/dev:work`):
-- `compound-engineering:review:code-simplicity-reviewer`
-- `compound-engineering:review:security-sentinel`
-- `compound-engineering:review:performance-oracle`
-- `compound-engineering:review:kieran-rails-reviewer`
-- `compound-engineering:review:kieran-python-reviewer`
-- `compound-engineering:review:kieran-typescript-reviewer`
-
-**Design agents** (used by both):
-- `compound-engineering:design:figma-design-sync`
-- `compound-engineering:design:design-implementation-reviewer`
+Before referencing a new compound-engineering name, check that it exists in the current release.
 
 ---
 
 ## MCP Servers
 
-The plugin configures two optional MCP servers:
+The Claude plugin configures **no** MCP servers: users add Linear and Figma themselves (see README, Optional integrations), so sessions don't show them as needing auth. The Codex plugin still ships both in `plugins/archon-codex/.mcp.json`.
 
 | Server | Purpose | Required? |
 |--------|---------|-----------|
-| Linear | Read/write Linear issues for `--linear` flag | Optional |
+| Linear | Read the issue for `--linear`, then update its Acceptance Criteria and Technical Notes | Optional |
 | Figma | Extract design specs for `--figma` flag | Optional |
 
-Both gracefully degrade — commands work without them, just skip the relevant features.
+Commands detect the tools by name (`*linear*get_issue`, and so on) and skip the feature with a warning when they are missing.
+
+---
+
+## Testing a change
+
+```bash
+claude plugin validate .            # marketplace manifest
+claude plugin validate plugins/dev  # plugin manifest, commands, skills
+claude --plugin-dir plugins/dev     # one-off session with the working copy
+```
+
+Then run `/dev:spec` and `/dev:work` on a tiny project (for example a single-file HTML game), with and without compound-engineering installed, and headless with `claude -p` to exercise the brief-only path.

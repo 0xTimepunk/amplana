@@ -5,7 +5,7 @@ description: This skill should be used when creating feature specifications. Aut
 
 # Dev Specifier
 
-Creates comprehensive feature specifications through an interactive interview process with parallel research agents.
+Routes spec requests to the `/dev:spec` workflow, so there is one spec process and one template.
 
 ## When This Skill Activates
 
@@ -20,108 +20,19 @@ This skill auto-triggers when the user:
 
 **80% planning, 20% execution.** Invest heavily in understanding the problem before writing code.
 
-## Workflow
+## What To Do
 
-### Phase 1: Setup
+1. Derive a short kebab-case feature name from the request (for example "plan the payment integration" -> `payment-integration`).
+2. Collect any requirements the user already gave in the request into a one-paragraph brief.
+3. Run the spec command with both:
 
-1. Parse the feature name from the user's request
-2. Determine spec path: `/specs/{feature-name}/spec.md`
-3. Check if spec already exists (offer continue or restart)
-4. Create `/specs/` directory if needed
+   ```
+   Skill(skill="dev:spec", args="{feature-name} \"{brief}\"")
+   ```
 
-### Phase 2: Interview
+   Pass `--linear LINEAR-XXX` or `--figma <url>` through if the user mentioned them.
 
-Conduct thorough interview using **AskUserQuestion** tool with 2-4 focused questions at a time:
-
-**Technical Implementation**
-- Architecture approach
-- Data models and schemas
-- API contracts
-- Integration points
-
-**Requirements**
-- Functional requirements (user stories)
-- Non-functional requirements
-- Acceptance criteria
-
-**Design & UX** (if applicable)
-- User flows
-- Edge cases
-- Error states
-
-**Tradeoffs & Risks**
-- Alternative approaches
-- Technical debt implications
-- Security/performance concerns
-
-**Testing Strategy**
-- Unit/integration/E2E scope
-
-### Interview Guidelines
-
-- Use AskUserQuestion with 2-4 focused questions at a time
-- Probe deeply on tradeoffs
-- Challenge assumptions constructively
-- Continue until all sections have sufficient content
-
-### Phase 3: Scope Analysis
-
-Estimate Lines of Code:
-
-| Component | Estimation |
-|-----------|------------|
-| Backend/API | Endpoints x 50-100 LoC |
-| Data models | Models x 30-50 LoC |
-| Services | Complexity x 100-200 LoC |
-| Tests | ~1.5x implementation |
-
-**If LoC > 2,000:** Warn and recommend splitting into milestones.
-
-### Phase 4: Generate Spec
-
-Write spec to `/specs/{feature-name}/spec.md` using the standard template:
-
-```markdown
-# {Feature Name} Spec
-
-## Metadata
-- Project: {project}
-- Milestone: {milestone}
-- Linear Issue: {LINEAR-XXX} or N/A
-- Author: {name}
-- Interview Date: {YYYY-MM-DD}
-- Predicted LoC: {estimate}
-- Scope Risk: Within limit / Exceeds 2,000 LoC
-- Reviewed: [ ] Pending / [x] Approved by {name}
-
-## Summary
-{1-2 paragraph executive summary}
-
-## Requirements
-### Functional
-### Non-Functional
-
-## Technical Design
-### Architecture
-### Data Model
-### API Changes
-
-## Scope Estimate
-
-## Implementation Plan
-
-## Test Plan
-
-## Risks & Mitigations
-
-## Interview Notes
-```
-
-### Phase 5: Finalization
-
-1. Remind user to get stakeholder approval before implementation
-2. Mention `/dev:work` command for execution after approval
-3. Reference compound engineering for post-implementation knowledge capture
+4. Follow `/dev:spec` from there. It writes everything under `specs/{feature-name}/` at the repository root, leaves the spec as Draft for a human to approve, and points to `/dev:work` for execution.
 
 ## Example Triggers
 

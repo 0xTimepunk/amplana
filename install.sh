@@ -1,15 +1,28 @@
 #!/bin/bash
 set -e
 
+# Installs the Archon Claude Code plugin from this clone, using Claude Code's
+# own plugin system. Does not touch your shell rc files.
+#
+#   ./install.sh                              install Archon only
+#   ./install.sh --with-compound-engineering  also install the recommended
+#                                             compound-engineering plugin
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Detect paths
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PLUGIN_DIR="$SCRIPT_DIR/plugins/dev"
+WITH_CE=""
+for arg in "$@"; do
+    case "$arg" in
+        --with-compound-engineering) WITH_CE="yes" ;;
+        -h|--help) sed -n '4,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) echo -e "${RED}Unknown option: $arg${NC}"; exit 1 ;;
+    esac
+done
 
 echo ""
 echo "=================================="
@@ -28,54 +41,36 @@ if ! command -v claude &> /dev/null; then
 fi
 echo -e "${GREEN}OK${NC}"
 
-# Step 2: Find shell RC file
-SHELL_RC=""
-if [ -f "$HOME/.zshrc" ]; then
-    SHELL_RC="$HOME/.zshrc"
-elif [ -f "$HOME/.bashrc" ]; then
-    SHELL_RC="$HOME/.bashrc"
-elif [ -f "$HOME/.bash_profile" ]; then
-    SHELL_RC="$HOME/.bash_profile"
-fi
+# Step 2: Warn about the alias older versions of this script added
+for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile"; do
+    if [ -f "$rc" ] && grep -q "alias claude=.*plugin-dir.*archon" "$rc" 2>/dev/null; then
+        echo -e "${YELLOW}Note: $rc still has the 'alias claude=... --plugin-dir ...archon' line from an older install.${NC}"
+        echo "  It loads a second copy of the plugin. Remove it, or run ./uninstall.sh first."
+        echo ""
+    fi
+done
 
-if [ -z "$SHELL_RC" ]; then
-    echo -e "${RED}Could not find shell RC file (.zshrc, .bashrc, or .bash_profile)${NC}"
-    exit 1
-fi
+# Step 3: Register this clone as a marketplace and install the plugin
+echo "Adding the Archon marketplace from $SCRIPT_DIR ..."
+claude plugin marketplace add "$SCRIPT_DIR"
+echo ""
+echo "Installing dev@archon ..."
+claude plugin install dev@archon
+echo -e "${GREEN}Archon installed.${NC}"
 
-# Step 3: Check for old superform alias
-if grep -q "alias claude=.*plugin-dir.*superform" "$SHELL_RC" 2>/dev/null; then
-    echo -e "${YELLOW}WARNING: Old superform plugin alias detected in $SHELL_RC${NC}"
-    echo "  Run the superform uninstall.sh first, or remove the alias manually."
-    echo "  The old alias will be replaced by the Archon alias."
+# Step 4: compound-engineering (recommended, optional)
+if [ -z "$WITH_CE" ] && [ -t 0 ]; then
     echo ""
+    echo "Archon works best with the compound-engineering plugin (research and review agents)."
+    echo "Without it, Archon uses general-purpose agents for the same roles."
+    read -r -p "Install compound-engineering now? [y/N] " reply
+    case "$reply" in [yY]*) WITH_CE="yes" ;; esac
 fi
-
-# Step 4: Remove any old alias and add new one
-echo -n "Configuring shell alias... "
-
-# Remove old archon aliases
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    sed -i '' '/# Archon Claude Code plugin/d' "$SHELL_RC" 2>/dev/null || true
-    sed -i '' '/alias claude=.*plugin-dir.*archon/d' "$SHELL_RC" 2>/dev/null || true
-    # Also remove old superform aliases
-    sed -i '' '/# Superform Claude Code plugin/d' "$SHELL_RC" 2>/dev/null || true
-    sed -i '' '/alias claude=.*plugin-dir.*superform/d' "$SHELL_RC" 2>/dev/null || true
-else
-    sed -i '/# Archon Claude Code plugin/d' "$SHELL_RC" 2>/dev/null || true
-    sed -i '/alias claude=.*plugin-dir.*archon/d' "$SHELL_RC" 2>/dev/null || true
-    # Also remove old superform aliases
-    sed -i '/# Superform Claude Code plugin/d' "$SHELL_RC" 2>/dev/null || true
-    sed -i '/alias claude=.*plugin-dir.*superform/d' "$SHELL_RC" 2>/dev/null || true
+if [ -n "$WITH_CE" ]; then
+    echo ""
+    echo "Installing compound-engineering ..."
+    claude plugin install compound-engineering --marketplace EveryInc/compound-engineering-plugin
 fi
-
-# Add the new alias
-echo "" >> "$SHELL_RC"
-echo "# Archon Claude Code plugin" >> "$SHELL_RC"
-echo "alias claude='claude --plugin-dir \"$PLUGIN_DIR\"'" >> "$SHELL_RC"
-
-echo -e "${GREEN}CONFIGURED${NC}"
-echo "  Added alias to $SHELL_RC"
 
 # Step 5: Summary
 echo ""
@@ -84,41 +79,27 @@ echo "  Installation Complete!"
 echo "=================================="
 echo ""
 echo "Available commands:"
-echo "  /dev:spec <feature-name>        Create feature specification (80% planning)"
-echo "  /dev:work <spec-path>           Execute spec with adaptive agent teams (20% execution)"
+echo "  /dev:spec <feature-name> [brief]  Create feature specification (80% planning)"
+echo "  /dev:work <spec-path>             Execute spec with adaptive agent teams (20% execution)"
 echo ""
 echo "Available skill (auto-triggers):"
-echo "  dev:specifier                   Triggers on 'create a spec', 'plan a feature'"
+echo "  dev:specifier                     Triggers on 'create a spec', 'plan a feature'"
 echo ""
-echo "MCP Servers (auto-configured, optional):"
-echo "  linear                          Read-only access to Linear issues"
-echo "  figma                           Design specifications (--figma flag)"
-echo ""
-echo -e "${YELLOW}Figma MCP setup:${NC}"
-echo "  Requires Figma account with Dev or Full seat on paid plan."
-echo "  Setup: https://figma.com -> Dev Mode -> Enable MCP server"
-echo "  Guide: https://help.figma.com/hc/en-us/articles/32132100833559"
-echo ""
-echo "Powered by compound-engineering (via Task tool):"
-echo "  Research agents:"
-echo "    repo-research-analyst         Codebase research"
-echo "    best-practices-researcher     Best practices"
-echo "    framework-docs-researcher     Framework docs"
-echo "    spec-flow-analyzer            Spec validation"
-echo "  Review agents (optional, user choice):"
-echo "    security-sentinel             Security review"
-echo "    performance-oracle            Performance review"
-echo "    code-simplicity-reviewer      Code quality review"
-echo ""
-echo "Adaptive team execution:"
-echo "  Solo:  Simple sequential work (score 0-25)"
-echo "  Lean:  2 parallel streams (score 26-50)"
-echo "  Full:  3+ parallel streams (score 51+)"
+echo -e "${YELLOW}Optional setup (see README):${NC}"
+echo "  Agent teams for Lean/Full tiers:  set CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1"
+echo "                                    (otherwise those tiers run as parallel subagents)"
+echo "  Linear (--linear, reads and updates issues):"
+echo "    claude mcp add --transport http linear https://mcp.linear.app/mcp"
+echo "  Figma (--figma, needs a Dev or Full seat):"
+echo "    claude mcp add --transport http figma https://mcp.figma.com/mcp"
+if [ -z "$WITH_CE" ]; then
+    echo "  compound-engineering (recommended):"
+    echo "    claude plugin install compound-engineering --marketplace EveryInc/compound-engineering-plugin"
+fi
 echo ""
 echo -e "${YELLOW}Next steps:${NC}"
-echo "  1. Reload your shell: source $SHELL_RC"
-echo "  2. Start Claude Code: claude"
-echo "  3. Run: /dev:spec my-feature"
+echo "  1. Start Claude Code in your project: claude"
+echo "  2. Run: /dev:spec my-feature"
 echo ""
 echo "To uninstall, run: ./uninstall.sh"
 echo ""
