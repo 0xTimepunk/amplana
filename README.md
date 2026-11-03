@@ -1,13 +1,18 @@
 # Archon
 
-General-purpose spec-driven development plugin for Claude Code and ChatGPT Codex. Create specs with AI interviews, execute them with adaptive agent teams.
+Spec-driven development plugin for Claude Code and ChatGPT Codex. You decide what to build; Archon turns those decisions into an agent-ready spec, then executes it with adaptive agent teams.
+
+> **Renamed in 1.2.0:** `/dev:spec` is now `/dev:brief` (Codex: `archon:spec` is now `archon:brief`). The old names still work for one release and run the new command. Output files are unchanged.
 
 ## What It Does
 
-**Claude: `/dev:spec`** — Plan features (80% of effort)
-- Interactive AI interview to gather requirements (or a written brief, with no interview)
+**Claude: `/dev:brief`** — Brief the builders (80% of effort)
+- Starts after the thinking: you bring requirements you have already decided (on the whiteboard, with your peers)
+- Pressure-tests them with focused questions about gaps, contradictions and risks (or skips the questions with `--no-interview`)
 - Parallel research agents analyze your codebase, best practices, and framework docs
-- Generates structured spec for stakeholder approval
+- Writes an agent-ready technical spec and build plan, plus a short spec for stakeholder approval
+
+It does not decide what to build. Open product questions come back to you, or are recorded as open questions in the spec.
 
 **Claude: `/dev:work`** — Execute features (20% of effort)
 - Reads your approved spec and assesses complexity
@@ -15,7 +20,7 @@ General-purpose spec-driven development plugin for Claude Code and ChatGPT Codex
 - Creates tasks, spawns agent teammates, and orchestrates parallel execution
 - Optionally documents learnings in `specs/knowledge/` for future reference
 
-**Codex: `archon:spec` skill** — Plan features with the same interview and research flow
+**Codex: `archon:brief` skill** — The same brief flow: questions, research, agent-ready spec
 
 **Codex: `archon:work` skill** — Execute specs with the same adaptive tiering, including multi-agent work for Lean and Full tiers
 
@@ -36,7 +41,7 @@ On older versions, add the marketplace first, then install:
 /plugin install dev@archon
 ```
 
-Then run `/reload-plugins` or restart Claude Code. `/dev:spec` and `/dev:work` are now available in every project.
+Then run `/reload-plugins` or restart Claude Code. `/dev:brief` and `/dev:work` are now available in every project.
 
 **Recommended:** the [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin. Archon uses its review, worktree and doc review skills when they are installed:
 
@@ -75,7 +80,7 @@ To install it into your Codex home as a local plugin:
 In Codex, install or enable the local plugin from this repository's marketplace, then invoke it by asking for the Archon workflows explicitly, for example:
 
 ```text
-Use Archon to create a spec for user authentication.
+Use Archon to brief user authentication: email + password, sessions in Postgres, no social login yet.
 Use Archon to execute specs/user-authentication/technical-spec.md with agent teams.
 ```
 
@@ -87,41 +92,39 @@ To uninstall the home-local Codex plugin:
 
 ## Usage
 
-### Create a Spec
+### Brief a Feature
 
 #### Claude Code
 
-```text
-/dev:spec user-authentication
-```
-
-Give requirements up front and the interview only asks about the gaps:
+Pass the feature name and what you have decided. The questions then cover only the gaps and risks:
 
 ```text
-/dev:spec dodge-game "Single-file HTML canvas game: arrow keys move a square, red blocks fall, score is survival time, R restarts"
+/dev:brief dodge-game "Single-file HTML canvas game: arrow keys move a square, red blocks fall, score is survival time, R restarts"
 ```
 
-Skip the interview entirely with `--no-interview`. Archon records the choices it made under Assumptions in `interview-notes.md`. Headless runs (`claude -p`), which cannot ask questions, use this mode automatically:
+Skip the questions entirely with `--no-interview`. Archon records the choices it made under Assumptions in `interview-notes.md`. Headless runs (`claude -p`), which cannot ask questions, use this mode automatically:
 
 ```bash
-claude -p '/dev:spec dodge-game --no-interview "Single-file HTML canvas game: arrow keys move, blocks fall, survival-time score"'
+claude -p '/dev:brief dodge-game --no-interview "Single-file HTML canvas game: arrow keys move, blocks fall, survival-time score"'
 ```
 
 With optional integrations (see [Optional integrations](#optional-integrations)):
 
 ```text
-/dev:spec user-auth --linear LINEAR-123
-/dev:spec hero-section --figma https://figma.com/file/abc123/design?node-id=45:678
+/dev:brief user-auth --linear LINEAR-123
+/dev:brief hero-section --figma https://figma.com/file/abc123/design?node-id=45:678
 ```
+
+With just a name (`/dev:brief user-authentication`), it asks you for the requirements first.
 
 Specs are written to `specs/{feature-name}/` at the root of the repository you run Claude Code in. The stakeholder spec starts as Draft; approving it is your call.
 
 #### ChatGPT Codex
 
 ```text
-Use Archon to create a spec for user authentication.
-Use Archon to create a spec for user-auth --linear LINEAR-123.
-Use Archon to create a spec for hero-section with this Figma URL: https://figma.com/file/abc123/design?node-id=45:678
+Use Archon to brief user authentication: email + password, sessions in Postgres, no social login yet.
+Use Archon to brief user-auth --linear LINEAR-123.
+Use Archon to brief hero-section with this Figma URL: https://figma.com/file/abc123/design?node-id=45:678
 ```
 
 ### Execute a Spec
@@ -184,9 +187,9 @@ Without it, Lean and Full still run in parallel, as plain subagents that each ow
 
 | Capability | Claude Code | ChatGPT Codex |
 |------------|-------------|---------------|
-| Spec entrypoint | `/dev:spec` command | `archon:spec` skill |
+| Brief entrypoint | `/dev:brief` command (`/dev:spec`: deprecated alias) | `archon:brief` skill (`archon:spec`: deprecated alias) |
 | Work entrypoint | `/dev:work` command | `archon:work` skill |
-| Interview UX | AskUserQuestion (or a brief, with `--no-interview`) | `request_user_input` |
+| Question UX | AskUserQuestion (skipped with `--no-interview`) | `request_user_input` |
 | Agent teams | Team tools with `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`, else parallel subagents | `spawn_agent` + coordination file |
 | Task tracking | TaskCreate/TaskList, else `work-tasks.md` | `specs/{feature-name}/work-tasks.md` |
 | Knowledge capture | Optional, writes `specs/knowledge/` | Not included; recommends a follow-up step |
@@ -225,10 +228,10 @@ Or from a clone:
 
 **80% planning, 20% execution.** Invest in understanding the problem before writing code. Each solved problem can be documented, compounding your team's knowledge over time.
 
-### Spec Creation Flow
+### Brief Flow
 
 ```
-Interview (or brief) → Research (parallel agents) → SpecFlow Analysis → Technical Spec → Stakeholder Spec
+Your requirements → Questions (optional) → Research (parallel agents) → SpecFlow Analysis → Technical Spec → Stakeholder Spec
 ```
 
 ### Work Execution Flow

@@ -6,12 +6,12 @@
   },
   "metadata": {
     "description": "Archon: spec-driven development with AI interviews and adaptive agent teams",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "plugins": [
     {
       "name": "dev",
-      "description": "/dev:spec creates specs via AI interview and research agents. /dev:work executes them with adaptive agent teams.",
+      "description": "/dev:brief turns requirements you have already decided into an agent-ready spec. /dev:work executes it with adaptive agent teams.",
       "author": {
         "name": "Timepunk",
         "url": "https://github.com/0xTimepunk"

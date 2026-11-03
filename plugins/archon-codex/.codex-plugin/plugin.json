@@ -1,6 +1,6 @@
 {
   "name": "archon-codex",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Spec-driven development workflows for Codex with guided interviews and adaptive multi-agent execution.",
   "author": {
     "name": "Archon"
@@ -19,8 +19,8 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Archon",
-    "shortDescription": "Plan features with interviews and execute them with adaptive agent teams.",
-    "longDescription": "Archon adds two Codex-native workflows: a spec interview that produces structured feature specs and a work workflow that assesses complexity, decomposes tasks, and runs solo or multi-agent execution tiers.",
+    "shortDescription": "Turn decided requirements into agent-ready specs, then execute them with adaptive agent teams.",
+    "longDescription": "Archon adds two Codex-native workflows: archon:brief turns requirements you have already decided into a structured, agent-ready spec through focused questions and codebase research, and archon:work assesses complexity, decomposes tasks, and runs solo or multi-agent execution tiers.",
     "developerName": "Archon",
     "category": "Productivity",
     "capabilities": [
@@ -28,7 +28,7 @@
       "Write"
     ],
     "defaultPrompt": [
-      "Use Archon to create a spec for a new feature.",
+      "Use Archon to brief a feature I have already decided on.",
       "Use Archon to execute an approved technical spec.",
       "Use Archon work mode with agent teams for this spec."
     ],
