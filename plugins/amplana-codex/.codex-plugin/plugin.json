@@ -1,0 +1,38 @@
+{
+  "name": "amplana-codex",
+  "version": "2.0.0",
+  "description": "Spec-driven development workflows for Codex with guided interviews and adaptive multi-agent execution.",
+  "author": {
+    "name": "Amplana"
+  },
+  "homepage": "https://github.com/0xTimepunk/amplana",
+  "repository": "https://github.com/0xTimepunk/amplana",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "spec-driven-development",
+    "agent-teams",
+    "planning",
+    "implementation"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Amplana",
+    "shortDescription": "Turn decided requirements into agent-ready specs, then execute them with adaptive agent teams.",
+    "longDescription": "Amplana adds two Codex-native workflows: amplana:brief turns requirements you have already decided into a structured, agent-ready spec through focused questions and codebase research, and amplana:work assesses complexity, decomposes tasks, and runs solo or multi-agent execution tiers.",
+    "developerName": "Amplana",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use Amplana to brief a feature I have already decided on.",
+      "Use Amplana to execute an approved technical spec.",
+      "Use Amplana work mode with agent teams for this spec."
+    ],
+    "brandColor": "#1F6FEB",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}

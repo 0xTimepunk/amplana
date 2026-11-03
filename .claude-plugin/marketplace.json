@@ -1,12 +1,12 @@
 {
-  "name": "archon",
+  "name": "amplana",
   "owner": {
     "name": "Timepunk",
     "url": "https://github.com/0xTimepunk"
   },
   "metadata": {
-    "description": "Archon: spec-driven development with AI interviews and adaptive agent teams",
-    "version": "1.3.0"
+    "description": "Amplana: spec-driven development with AI interviews and adaptive agent teams",
+    "version": "2.0.0"
   },
   "plugins": [
     {
@@ -16,7 +16,7 @@
         "name": "Timepunk",
         "url": "https://github.com/0xTimepunk"
       },
-      "homepage": "https://github.com/0xTimepunk/archon",
+      "homepage": "https://github.com/0xTimepunk/amplana",
       "license": "MIT",
       "source": "./plugins/dev"
     }

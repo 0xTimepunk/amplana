@@ -1,13 +1,13 @@
 {
   "name": "dev",
-  "version": "1.3.0",
+  "version": "2.0.0",
   "description": "Spec-driven development plugin. /dev:brief turns requirements you have already decided into an agent-ready spec (questions, codebase research, build plan). /dev:work executes it with adaptive agent teams. /dev:security-review runs an adversarial multi-agent security review of Solidity code.",
   "author": {
     "name": "Timepunk",
     "url": "https://github.com/0xTimepunk"
   },
-  "homepage": "https://github.com/0xTimepunk/archon",
-  "repository": "https://github.com/0xTimepunk/archon",
+  "homepage": "https://github.com/0xTimepunk/amplana",
+  "repository": "https://github.com/0xTimepunk/amplana",
   "license": "MIT",
   "keywords": [
     "spec-driven-development",

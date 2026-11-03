@@ -4,12 +4,12 @@ This file provides guidance to Claude Code when working with this repository.
 
 ## Repository Overview
 
-**Archon** is a general-purpose spec-driven development plugin repository for Claude Code and ChatGPT Codex. It provides:
+**Amplana** is a general-purpose spec-driven development plugin repository for Claude Code and ChatGPT Codex. It provides:
 
 1. **`/dev:brief`** — turns requirements the user has already decided into an agent-ready spec: focused questions, parallel research agents, build plan (`/dev:spec` stays as a deprecated alias for one release)
 2. **`/dev:work`** — Adaptive agent teams that execute specs (team size scales with complexity)
 3. **`dev:specifier`** — Auto-triggered Claude skill for spec creation
-4. **`archon:brief` / `archon:work`** — Codex-native skills for the same planning and execution workflows (`archon:spec` is a deprecated alias)
+4. **`amplana:brief` / `amplana:work`** — Codex-native skills for the same planning and execution workflows (`amplana:spec` is a deprecated alias)
 
 This is a **plugin repository**, not application code. It defines commands, skills, and workflows that Claude Code and ChatGPT Codex use to help engineers plan and build features.
 
@@ -18,11 +18,11 @@ This is a **plugin repository**, not application code. It defines commands, skil
 ## Repository Structure
 
 ```
-archon/
-├── .claude-plugin/marketplace.json  # Claude Code marketplace (name: archon) listing plugins/dev
+amplana/
+├── .claude-plugin/marketplace.json  # Claude Code marketplace (name: amplana) listing plugins/dev
 ├── plugins/dev/                     # Claude Code plugin
 │   ├── .claude-plugin/
-│   │   └── plugin.json              # Plugin metadata (name: dev, v1.3.0)
+│   │   └── plugin.json              # Plugin metadata (name: dev, v2.0.0)
 │   ├── commands/                    # User-invocable slash commands
 │   │   ├── brief.md                 # /dev:brief command
 │   │   ├── spec.md                  # /dev:spec, deprecated alias of /dev:brief
@@ -31,18 +31,18 @@ archon/
 │   └── skills/                      # Auto-triggered skills
 │       └── specifier/
 │           └── SKILL.md             # Specifier skill
-├── plugins/archon-codex/            # Codex plugin
+├── plugins/amplana-codex/            # Codex plugin
 │   ├── .codex-plugin/
 │   │   └── plugin.json              # Codex plugin manifest
 │   └── skills/
 │       ├── brief/
-│       │   └── SKILL.md             # Codex brief workflow (archon:brief)
+│       │   └── SKILL.md             # Codex brief workflow (amplana:brief)
 │       ├── spec/
-│       │   └── SKILL.md             # archon:spec, deprecated alias
+│       │   └── SKILL.md             # amplana:spec, deprecated alias
 │       └── work/
 │           └── SKILL.md             # Codex adaptive work workflow
 ├── .agents/plugins/marketplace.json # Repo-local Codex marketplace entry
-├── .claude-plugin/marketplace.json  # Claude Code marketplace entry (dev@archon)
+├── .claude-plugin/marketplace.json  # Claude Code marketplace entry (dev@amplana)
 │
 ├── CLAUDE.md                        # This file
 ├── README.md                        # User-facing docs
@@ -88,10 +88,10 @@ Plan (80%) → Work (20%) → Assess → Compound
 
 ### For Plugin Development
 
-Claude commands and skills live in `plugins/dev/`. Codex plugin assets live in `plugins/archon-codex/`. When creating or updating:
+Claude commands and skills live in `plugins/dev/`. Codex plugin assets live in `plugins/amplana-codex/`. When creating or updating:
 
 1. **Claude Commands**: `plugins/dev/commands/{name}.md` with YAML frontmatter
-2. **Skills**: `plugins/dev/skills/{name}/SKILL.md` or `plugins/archon-codex/skills/{name}/SKILL.md`
+2. **Skills**: `plugins/dev/skills/{name}/SKILL.md` or `plugins/amplana-codex/skills/{name}/SKILL.md`
 3. Keep workflow files focused and single-responsibility
 4. Test the relevant host workflow before committing
 5. Update the relevant manifest version when behavior changes materially
@@ -119,7 +119,7 @@ description: When this skill should auto-trigger
 
 ## Compound Engineering (optional)
 
-Archon must work without any other plugin. Every place that uses compound-engineering has a `general-purpose` fallback with a role prompt, written next to it in the command. Keep it that way when editing.
+Amplana must work without any other plugin. Every place that uses compound-engineering has a `general-purpose` fallback with a role prompt, written next to it in the command. Keep it that way when editing.
 
 - **compound-engineering 2.x** registers agent types such as `compound-engineering:research:repo-research-analyst` and `compound-engineering:review:security-sentinel`. The commands use them when they appear in the agent type list.
 - **compound-engineering 3.x** (current) registers no agent types, only skills. The commands use these skills when installed, by name: `ce-doc-review` (2.x `document-review`), `ce-code-review` (2.x `ce:review`), `ce-worktree` (2.x `git-worktree`).

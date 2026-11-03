@@ -1,9 +1,9 @@
 ---
-name: archon:work
-description: Execute an approved plan or technical spec in Codex using complexity-based solo or multi-agent workflows. Use when the user wants implementation, especially with parallel agent teams.
+name: amplana:work
+description: Execute an approved plan or technical spec in Codex using complexity-based solo or multi-agent workflows. Use when the user wants implementation, especially with parallel agent teams, including when they ask for Amplana or Archon (its former name).
 ---
 
-# Archon Work
+# Amplana Work
 
 Execute a work plan or technical specification using adaptive agent teams. This is the Codex-native equivalent of the Claude `/dev:work` command.
 

@@ -5,12 +5,12 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-TARGET_PLUGIN_DIR="$HOME/plugins/archon-codex"
+TARGET_PLUGIN_DIR="$HOME/plugins/amplana-codex"
 MARKETPLACE_PATH="$HOME/.agents/plugins/marketplace.json"
 
 echo ""
 echo "=================================="
-echo "  Archon Codex Uninstaller"
+echo "  Amplana Codex Uninstaller"
 echo "=================================="
 echo ""
 
@@ -37,7 +37,7 @@ with open(marketplace_path, "r", encoding="utf-8") as f:
     data = json.load(f)
 
 plugins = data.get("plugins", [])
-data["plugins"] = [plugin for plugin in plugins if plugin.get("name") != "archon-codex"]
+data["plugins"] = [plugin for plugin in plugins if plugin.get("name") not in ("amplana-codex", "archon-codex")]
 
 with open(marketplace_path, "w", encoding="utf-8") as f:
     json.dump(data, f, indent=2)
@@ -55,5 +55,5 @@ echo "=================================="
 echo ""
 echo "Removed:"
 echo "  - Symlink at $TARGET_PLUGIN_DIR"
-echo "  - archon-codex marketplace entry from $MARKETPLACE_PATH"
+echo "  - amplana-codex marketplace entry from $MARKETPLACE_PATH"
 echo ""
