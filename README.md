@@ -203,7 +203,19 @@ Without it, Lean and Full still run in parallel, as plain subagents that each ow
 | **Linear** | `--linear`: reads the issue, and after the interview **updates** its Acceptance Criteria and Technical Notes sections (with your confirmation) | `claude mcp add --transport http linear https://mcp.linear.app/mcp`, then authenticate with `/mcp` |
 | **Figma** | `--figma`: extracts a design spec from a Figma frame | Figma Dev or Full seat; `claude mcp add --transport http figma https://mcp.figma.com/mcp`, then `/mcp` |
 
-The Claude plugin does not configure the Linear or Figma servers for you, so sessions don't show them as needing authentication unless you add them. Without an integration, its flag is skipped with a warning. The Codex plugin still ships both servers in `plugins/archon-codex/.mcp.json`.
+Neither plugin configures the Linear or Figma servers for you, so sessions don't show them as needing authentication unless you add them. Without an integration, its flag is skipped with a warning.
+
+**In Codex**, add them to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.linear]
+url = "https://mcp.linear.app/mcp"
+
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+```
+
+then sign in with `codex mcp login linear` (and `codex mcp login figma`). `codex mcp list` shows what is connected.
 
 ## Uninstall
 

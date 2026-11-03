@@ -1,6 +1,6 @@
 {
   "name": "archon-codex",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Spec-driven development workflows for Codex with guided interviews and adaptive multi-agent execution.",
   "author": {
     "name": "Archon"
@@ -16,7 +16,6 @@
     "implementation"
   ],
   "skills": "./skills/",
-  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Archon",
     "shortDescription": "Turn decided requirements into agent-ready specs, then execute them with adaptive agent teams.",
@@ -32,6 +31,8 @@
       "Use Archon to execute an approved technical spec.",
       "Use Archon work mode with agent teams for this spec."
     ],
-    "brandColor": "#1F6FEB"
+    "brandColor": "#1F6FEB",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
   }
 }
