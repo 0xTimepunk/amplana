@@ -5,6 +5,7 @@
   "author": {
     "name": "Archon"
   },
+  "license": "MIT",
   "keywords": [
     "spec-driven-development",
     "agent-teams",

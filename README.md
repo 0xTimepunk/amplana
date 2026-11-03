@@ -24,7 +24,7 @@ General-purpose spec-driven development plugin for Claude Code and ChatGPT Codex
 ### Claude Code
 
 ```bash
-git clone <repo-url> ~/work/archon
+git clone https://github.com/0xTimepunk/archon.git ~/work/archon
 cd ~/work/archon
 chmod +x install.sh
 ./install.sh
@@ -178,3 +178,7 @@ After completing work, the compound phase captures:
 - Cross-references to related issues
 
 Stored in `/specs/knowledge/` for searchable future reference.
+
+## License
+
+[MIT](LICENSE)
