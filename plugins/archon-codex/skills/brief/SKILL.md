@@ -135,7 +135,7 @@ It should capture:
 - problem
 - proposed approach
 - acceptance criteria
-- open questions or decisions already made
+- open questions: unresolved product decisions for the user to answer before approval, and decisions already made
 
 ### 8. Final Guidance
 
