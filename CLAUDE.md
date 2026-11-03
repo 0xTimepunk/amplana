@@ -22,11 +22,12 @@ archon/
 ├── .claude-plugin/marketplace.json  # Claude Code marketplace (name: archon) listing plugins/dev
 ├── plugins/dev/                     # Claude Code plugin
 │   ├── .claude-plugin/
-│   │   └── plugin.json              # Plugin metadata (name: dev, v1.2.2)
+│   │   └── plugin.json              # Plugin metadata (name: dev, v1.3.0)
 │   ├── commands/                    # User-invocable slash commands
 │   │   ├── brief.md                 # /dev:brief command
 │   │   ├── spec.md                  # /dev:spec, deprecated alias of /dev:brief
-│   │   └── work.md                  # /dev:work command
+│   │   ├── work.md                  # /dev:work command
+│   │   └── security-review.md       # /dev:security-review command
 │   └── skills/                      # Auto-triggered skills
 │       └── specifier/
 │           └── SKILL.md             # Specifier skill
@@ -41,6 +42,7 @@ archon/
 │       └── work/
 │           └── SKILL.md             # Codex adaptive work workflow
 ├── .agents/plugins/marketplace.json # Repo-local Codex marketplace entry
+├── .claude-plugin/marketplace.json  # Claude Code marketplace entry (dev@archon)
 │
 ├── CLAUDE.md                        # This file
 ├── README.md                        # User-facing docs
