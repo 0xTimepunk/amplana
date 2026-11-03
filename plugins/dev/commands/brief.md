@@ -33,7 +33,7 @@ All `specs/...` paths in this command are **relative to the repository root** (`
 Pick one, and say which in your first message:
 
 - **Interactive** (default): AskUserQuestion is available and no `--no-interview` flag was passed.
-- **No interview**: AskUserQuestion is not available (for example a headless `claude -p` run), or `--no-interview` was passed. Do not ask questions. Build the interview notes from the requirements, the Linear issue (if any) and the codebase. Where the requirements are silent on an implementation detail, choose the simplest reasonable option and record it under **Assumptions** in `interview-notes.md`. If there are no requirements at all and no way to ask, stop and print the usage example above.
+- **No interview**: AskUserQuestion is not available (for example a headless `claude -p` run), or `--no-interview` was passed. Do not ask questions. Build the interview notes from the requirements, the Linear issue (if any) and the codebase. Where the requirements are silent on an implementation detail, choose the simplest reasonable option and record it under **Assumptions** in `interview-notes.md`. Where they are silent on a product decision (who it is for, what is in or out of scope, behaviour a user would notice), do not decide: record it under **Open Questions** and carry it into the spec's Open Questions table. If there are no requirements at all and no way to ask, stop and print the usage example above.
 
 In no-interview mode, every place below that says "use AskUserQuestion" means: take the recommended or first option and record the choice.
 
@@ -90,7 +90,7 @@ compound-engineering **skills** are used where they exist, by whichever name is 
 
 **SKIP THIS PHASE if interview-notes.md already exists (checked in Phase 1 step 4)**
 
-**No-interview mode:** do not interview. Write `specs/{feature-name}/interview-notes.md` with these sections, filled from the requirements, the Linear issue and the codebase: Summary, Requirements (functional, non-functional), Acceptance Criteria (checkbox list), Technical Decisions, Assumptions (each choice you made where the brief was silent), Open Questions, Testing Strategy. Then go to Phase 2.5.
+**No-interview mode:** do not interview. Write `specs/{feature-name}/interview-notes.md` with these sections, filled from the requirements, the Linear issue and the codebase: Summary, Requirements (functional, non-functional), Acceptance Criteria (checkbox list), Technical Decisions, Assumptions (each implementation choice you made where the requirements were silent), Open Questions (each product decision left to the user), Testing Strategy. Then go to Phase 2.5.
 
 **Interactive mode:** conduct a thorough interview using the **AskUserQuestion** tool. If requirements were given, start from them and ask only about what they leave open or what looks contradictory or risky. If none were given, first ask one open question: what have you decided to build, for whom, and what must be true when it is done? Then continue from the answer. Ask 2-4 focused questions at a time covering:
 
@@ -529,7 +529,15 @@ Write to `specs/{feature-name}/spec.md` using this **strict template** (enforced
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
 
-## Open Questions (Resolved)
+## Open Questions
+
+### Unresolved
+Product decisions the requirements leave open. The user must answer these before approving.
+
+| Question | Why it matters | Options |
+|----------|----------------|---------|
+
+### Resolved
 | Question | Answer | Decided By |
 |----------|--------|------------|
 
