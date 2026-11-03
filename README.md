@@ -20,6 +20,12 @@ It does not decide what to build. Open product questions come back to you, or ar
 - Creates tasks, spawns agent teammates, and orchestrates parallel execution
 - Optionally documents learnings in `specs/knowledge/` for future reference
 
+**Claude: `/dev:security-review`** — Adversarial security review of Solidity code
+- Builds a context map first (Trail of Bits `audit-context-building`, `entry-point-analyzer`)
+- Hunts with pashov's 12 `solidity-auditor` attacker personas, then a blind-spot pass over functions no persona named
+- Judges and deduplicates by root cause, then tries to refute every candidate (Trail of Bits `fp-check`); only a quoted guard refutes
+- Past audits and git history are off by default (`--history` turns them on), so its findings can be measured
+
 **Codex: `archon:brief` skill** — The same brief flow: questions, research, agent-ready spec
 
 **Codex: `archon:work` skill** — Execute specs with the same adaptive tiering, including multi-agent work for Lean and Full tiers
@@ -41,7 +47,7 @@ On older versions, add the marketplace first, then install:
 /plugin install dev@archon
 ```
 
-Then run `/reload-plugins` or restart Claude Code. `/dev:brief` and `/dev:work` are now available in every project.
+Then run `/reload-plugins` or restart Claude Code. `/dev:brief`, `/dev:work` and `/dev:security-review` are now available in every project.
 
 **Recommended:** the [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) plugin. Archon uses its review, worktree and doc review skills when they are installed:
 
@@ -66,6 +72,8 @@ For a one-off session without installing anything:
 ```bash
 claude --plugin-dir ~/work/archon/plugins/dev
 ```
+
+**For `/dev:security-review` only:** it also needs pashov's `solidity-auditor` (copy `solidity-auditor/` from `github.com/pashov/skills` into `~/.claude/skills/`) and Trail of Bits' `audit-context-building`, `entry-point-analyzer` and `fp-check` (`/plugin marketplace add trailofbits/skills`).
 
 ### ChatGPT Codex
 
@@ -152,6 +160,17 @@ The work command will:
 7. Offer to document learnings (Claude only, and only if you say yes)
 
 In a headless run, `/dev:work` asks nothing: it takes the recommended option at each decision point and lists those decisions in its final summary.
+
+### Review Solidity Code
+
+#### Claude Code
+
+```bash
+/dev:security-review src/vaults
+/dev:security-review src/Vault.sol src/Strategy.sol --passes 3
+```
+
+Writes everything to `.security-review/<stamp>/`: the context map, every agent's raw output, the judged candidates, the verifier verdicts and `report.md` (findings, leads, and refuted items with reasons).
 
 ## Adaptive Team Strategy
 

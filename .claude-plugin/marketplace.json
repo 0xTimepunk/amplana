@@ -6,12 +6,12 @@
   },
   "metadata": {
     "description": "Archon: spec-driven development with AI interviews and adaptive agent teams",
-    "version": "1.2.2"
+    "version": "1.3.0"
   },
   "plugins": [
     {
       "name": "dev",
-      "description": "/dev:brief turns requirements you have already decided into an agent-ready spec. /dev:work executes it with adaptive agent teams.",
+      "description": "/dev:brief turns requirements you have already decided into an agent-ready spec. /dev:work executes it with adaptive agent teams. /dev:security-review runs an adversarial security review of Solidity code.",
       "author": {
         "name": "Timepunk",
         "url": "https://github.com/0xTimepunk"
