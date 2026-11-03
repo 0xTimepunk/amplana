@@ -15,6 +15,12 @@ General-purpose spec-driven development plugin for Claude Code and ChatGPT Codex
 - Creates tasks, spawns agent teammates, and orchestrates parallel execution
 - Compounds learnings for future reference
 
+**Claude: `/dev:security-review`** — Adversarial security review of Solidity code
+- Builds a context map first (Trail of Bits `audit-context-building`, `entry-point-analyzer`)
+- Hunts with pashov's 12 `solidity-auditor` attacker personas, then a blind-spot pass over functions no persona named
+- Judges and deduplicates by root cause, then tries to refute every candidate (Trail of Bits `fp-check`); only a quoted guard refutes
+- Past audits and git history are off by default (`--history` turns them on), so its findings can be measured
+
 **Codex: `archon:spec` skill** — Plan features with the same interview and research flow
 
 **Codex: `archon:work` skill** — Execute specs with the same adaptive tiering, including multi-agent work for Lean and Full tiers
@@ -32,6 +38,15 @@ source ~/.zshrc  # or ~/.bashrc
 ```
 
 This adds a shell alias so Claude Code loads the plugin automatically.
+
+Or, in the Claude desktop app or any Claude Code session, add the repo as a plugin marketplace and install `dev`:
+
+```text
+/plugin marketplace add 0xTimepunk/archon
+/plugin install dev@archon
+```
+
+`/dev:security-review` also needs pashov's `solidity-auditor` (copy `solidity-auditor/` from `github.com/pashov/skills` into `~/.claude/skills/`) and Trail of Bits' `audit-context-building`, `entry-point-analyzer` and `fp-check` (`/plugin marketplace add trailofbits/skills`).
 
 ### ChatGPT Codex
 
@@ -108,6 +123,17 @@ The work command will:
 4. Execute (solo or with agent teammates)
 5. Run quality checks
 6. Compound learnings
+
+### Review Solidity Code
+
+#### Claude Code
+
+```bash
+/dev:security-review src/vaults
+/dev:security-review src/Vault.sol src/Strategy.sol --passes 3
+```
+
+Writes everything to `.security-review/<stamp>/`: the context map, every agent's raw output, the judged candidates, the verifier verdicts and `report.md` (findings, leads, and refuted items with reasons).
 
 ## Adaptive Team Strategy
 

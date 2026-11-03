@@ -21,10 +21,11 @@ This is a **plugin repository**, not application code. It defines commands, skil
 archon/
 ├── plugins/dev/                     # Claude Code plugin
 │   ├── .claude-plugin/
-│   │   └── plugin.json              # Plugin metadata (name: dev, v1.0.0)
+│   │   └── plugin.json              # Plugin metadata (name: dev, v1.1.0)
 │   ├── commands/                    # User-invocable slash commands
 │   │   ├── spec.md                  # /dev:spec command
-│   │   └── work.md                  # /dev:work command
+│   │   ├── work.md                  # /dev:work command
+│   │   └── security-review.md       # /dev:security-review command
 │   └── skills/                      # Auto-triggered skills
 │       └── specifier/
 │           └── SKILL.md             # Specifier skill
@@ -38,6 +39,7 @@ archon/
 │       └── work/
 │           └── SKILL.md             # Codex adaptive work workflow
 ├── .agents/plugins/marketplace.json # Repo-local Codex marketplace entry
+├── .claude-plugin/marketplace.json  # Claude Code marketplace entry (dev@archon)
 │
 ├── CLAUDE.md                        # This file
 ├── README.md                        # User-facing docs

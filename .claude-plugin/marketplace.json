@@ -1,0 +1,13 @@
+{
+  "name": "archon",
+  "owner": {
+    "name": "0xTimepunk"
+  },
+  "plugins": [
+    {
+      "name": "dev",
+      "source": "./plugins/dev",
+      "description": "Spec-driven development (/dev:spec, /dev:work) and adversarial security review (/dev:security-review)."
+    }
+  ]
+}
