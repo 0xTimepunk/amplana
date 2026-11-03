@@ -1,6 +1,6 @@
 {
   "name": "dev",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Spec-driven development plugin. /dev:brief turns requirements you have already decided into an agent-ready spec (questions, codebase research, build plan). /dev:work executes it with adaptive agent teams.",
   "author": {
     "name": "Timepunk",

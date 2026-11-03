@@ -22,7 +22,7 @@ archon/
 ├── .claude-plugin/marketplace.json  # Claude Code marketplace (name: archon) listing plugins/dev
 ├── plugins/dev/                     # Claude Code plugin
 │   ├── .claude-plugin/
-│   │   └── plugin.json              # Plugin metadata (name: dev, v1.2.0)
+│   │   └── plugin.json              # Plugin metadata (name: dev, v1.2.2)
 │   ├── commands/                    # User-invocable slash commands
 │   │   ├── brief.md                 # /dev:brief command
 │   │   ├── spec.md                  # /dev:spec, deprecated alias of /dev:brief
@@ -33,7 +33,6 @@ archon/
 ├── plugins/archon-codex/            # Codex plugin
 │   ├── .codex-plugin/
 │   │   └── plugin.json              # Codex plugin manifest
-│   ├── .mcp.json                    # Optional MCP server config
 │   └── skills/
 │       ├── brief/
 │       │   └── SKILL.md             # Codex brief workflow (archon:brief)
@@ -129,7 +128,7 @@ Before referencing a new compound-engineering name, check that it exists in the 
 
 ## MCP Servers
 
-The Claude plugin configures **no** MCP servers: users add Linear and Figma themselves (see README, Optional integrations), so sessions don't show them as needing auth. The Codex plugin still ships both in `plugins/archon-codex/.mcp.json`.
+Neither plugin configures MCP servers: users add Linear and Figma themselves (see README, Optional integrations: `claude mcp add` for Claude, `~/.codex/config.toml` plus `codex mcp login` for Codex), so sessions don't show them as needing auth. Don't add `mcpServers` back to either manifest.
 
 | Server | Purpose | Required? |
 |--------|---------|-----------|
